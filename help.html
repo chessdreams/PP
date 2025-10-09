@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Center - PortfolioPro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
+                    <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">PortfolioPro</h1>
+                        <p class="text-sm text-gray-600">Professional Portfolio Management</p>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-2">
+                    <button onclick="window.location.href='index.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i>Portfolio
+                    </button>
+                    <button onclick="window.location.href='calculator.html'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-calculator mr-2"></i>Calculator
+                    </button>
+                    <button onclick="window.location.href='targets.html'" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-bullseye mr-2"></i>Targets
+                    </button>
+                    <button onclick="window.location.href='transactions.html'" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-exchange-alt mr-2"></i>Transactions
+                    </button>
+                    <button onclick="window.location.href='settings.html'" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </button>
+                </nav>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobileMenuBtn" class="md:hidden text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Navigation -->
+            <div id="mobileMenu" class="md:hidden hidden pb-4">
+                <div class="flex flex-col space-y-2">
+                    <button onclick="window.location.href='index.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-chart-pie mr-2"></i>Portfolio
+                    </button>
+                    <button onclick="window.location.href='calculator.html'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-calculator mr-2"></i>Calculator
+                    </button>
+                    <button onclick="window.location.href='targets.html'" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-bullseye mr-2"></i>Targets
+                    </button>
+                    <button onclick="window.location.href='transactions.html'" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-exchange-alt mr-2"></i>Transactions
+                    </button>
+                    <button onclick="window.location.href='settings.html'" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center">
+                        <i class="fas fa-cog mr-2"></i>Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Search Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">How can we help you?</h1>
+            <div class="relative max-w-2xl">
+                <input type="text" placeholder="Search for help articles, guides, and FAQs..." 
+                       class="w-full px-4 py-3 pl-12 pr-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            </div>
+        </div>
+
+        <!-- Quick Help Categories -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-upload text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Getting Started</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Learn how to upload your first portfolio and get started with PortfolioPro.</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Articles →</a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-chart-pie text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Portfolio Management</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Manage your portfolios, analyze performance, and track your investments.</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Articles →</a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-calculator text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Calculations</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Use our calculator tools for various financial calculations.</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Articles →</a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-exchange-alt text-orange-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Transactions</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Track your buy/sell transactions and maintain accurate records.</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Articles →</a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Troubleshooting</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Common issues and solutions to help you resolve problems quickly.</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Articles →</a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-cog text-gray-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Settings</h3>
+                </div>
+                <p class="text-gray-600 text-sm mb-4">Configure your preferences and manage your account settings.</p>
+                <a href="#" class="text-blue-600 hover:text-blue-800 text-sm font-medium">View Articles →</a>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
+            
+            <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleFAQ(this)">
+                        <span class="font-medium text-gray-900">What file formats are supported for portfolio uploads?</span>
+                        <i class="fas fa-chevron-down text-gray-500 transform transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 hidden">
+                        <p class="text-gray-600">PortfolioPro supports CSV, Excel (.xlsx, .xls), and JSON file formats. Make sure your files have the required columns: Symbol, Quantity, Price, Date, and Total Cost.</p>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleFAQ(this)">
+                        <span class="font-medium text-gray-900">How do I set target prices for my stocks?</span>
+                        <i class="fas fa-chevron-down text-gray-500 transform transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 hidden">
+                        <p class="text-gray-600">Navigate to the Target Price Manager, select your portfolio, and set target prices for individual stocks. You can update these targets anytime to track your investment goals.</p>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleFAQ(this)">
+                        <span class="font-medium text-gray-900">Can I export my portfolio data?</span>
+                        <i class="fas fa-chevron-down text-gray-500 transform transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 hidden">
+                        <p class="text-gray-600">Yes, you can export your portfolio data in various formats including CSV and Excel. Use the export buttons available in each section of the application.</p>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleFAQ(this)">
+                        <span class="font-medium text-gray-900">How do I compare multiple portfolios?</span>
+                        <i class="fas fa-chevron-down text-gray-500 transform transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 hidden">
+                        <p class="text-gray-600">Select multiple portfolios using the checkboxes, then click "Compare Portfolios" to see a detailed comparison including performance metrics and changes over time.</p>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg">
+                    <button class="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition-colors" onclick="toggleFAQ(this)">
+                        <span class="font-medium text-gray-900">Is my data secure and private?</span>
+                        <i class="fas fa-chevron-down text-gray-500 transform transition-transform"></i>
+                    </button>
+                    <div class="px-6 pb-4 hidden">
+                        <p class="text-gray-600">Yes, all your data is stored locally in your browser using IndexedDB. No data is sent to external servers, ensuring complete privacy and security of your financial information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Support -->
+        <div class="bg-blue-50 rounded-lg p-8 mt-8">
+            <div class="text-center">
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Still need help?</h3>
+                <p class="text-gray-600 mb-4">Can't find what you're looking for? Our support team is here to help.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="mailto:support@portfoliopro.com" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+                        <i class="fas fa-envelope mr-2"></i>Email Support
+                    </a>
+                    <a href="docs.html" class="bg-white hover:bg-gray-50 text-blue-600 border border-blue-600 px-6 py-3 rounded-lg transition-colors">
+                        <i class="fas fa-book mr-2"></i>View Documentation
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Brand Section -->
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-3 mb-4">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-chart-line text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">PortfolioPro</h3>
+                            <p class="text-sm text-gray-600">Professional Portfolio Management</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        A comprehensive portfolio management platform designed for professional investors. 
+                        Track, analyze, and optimize your investment portfolio with advanced analytics and insights.
+                    </p>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-gray-900 font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="index.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Portfolio Dashboard</a></li>
+                        <li><a href="calculator.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Stock Calculator</a></li>
+                        <li><a href="targets.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Target Prices</a></li>
+                        <li><a href="transactions.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Transaction History</a></li>
+                    </ul>
+                </div>
+
+                <!-- Support & Resources -->
+                <div>
+                    <h4 class="text-gray-900 font-semibold mb-4">Support & Resources</h4>
+                    <ul class="space-y-2">
+                        <li><a href="docs.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Documentation</a></li>
+                        <li><a href="help.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Help Center</a></li>
+                        <li><a href="tutorials.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Tutorials</a></li>
+                        <li><a href="contact.html" class="text-gray-600 hover:text-gray-900 transition-colors text-sm">Contact Support</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Bottom Section -->
+            <div class="border-t border-gray-200 mt-8 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-600 text-sm">
+                        © 2024 PortfolioPro. All rights reserved.
+                    </p>
+                    <div class="flex space-x-6 mt-4 md:mt-0">
+                        <a href="https://github.com" class="text-gray-600 hover:text-gray-900 transition-colors" title="GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="mailto:support@portfoliopro.com" class="text-gray-600 hover:text-gray-900 transition-colors" title="Email Support">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                        <a href="docs.html" class="text-gray-600 hover:text-gray-900 transition-colors" title="Documentation">
+                            <i class="fas fa-book"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // FAQ toggle functionality
+        function toggleFAQ(button) {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector('i');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
+</body>
+</html>
