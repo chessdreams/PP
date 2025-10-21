@@ -688,7 +688,7 @@
                 tradesBySymbol[symbol].push(trade);
             });
 
-            // Process each symbol's trades to match buy/sell pairs
+            // Process each symbol's trades to match buy/sell pairs using FIFO
             Object.keys(tradesBySymbol).forEach(symbol => {
                 const symbolTrades = tradesBySymbol[symbol];
                 const buyTrades = [];
@@ -706,6 +706,13 @@
                         sellTrades.push(trade);
                     }
                 });
+
+                // Sort buy trades by date (FIFO - First In, First Out)
+                buyTrades.sort((a, b) => new Date(a.date) - new Date(b.date));
+                sellTrades.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // Create a copy of buy trades for FIFO matching
+                const availableBuyTrades = [...buyTrades];
 
                 // First, add all buy trades to the journal
                 buyTrades.forEach(buyTrade => {
@@ -732,47 +739,66 @@
                         duration: '',
                         soldPrice: 0,
                         sellOrderValue: 0,
-                        isMatched: false
+                        isMatched: false,
+                        remainingQuantity: buyQuantity // Track remaining quantity for FIFO
                     };
 
                     allTrades.push(buyEntry);
                 });
 
-                // Calculate weighted average buy price for all buy trades
-                const totalBuyQuantity = buyTrades.reduce((sum, trade) => sum + (parseFloat(trade.quantity) || 0), 0);
-                const totalBuyCost = buyTrades.reduce((sum, trade) => {
-                    const qty = parseFloat(trade.quantity) || 0;
-                    const price = parseFloat(trade.price) || 0;
-                    return sum + (qty * price) + (qty * price * 0.0112); // Include brokerage
-                }, 0);
-                const weightedAvgBuyPrice = totalBuyQuantity > 0 ? totalBuyCost / totalBuyQuantity : 0;
-
-                // Process each sell trade using weighted average
+                // Process each sell trade using FIFO matching
                 sellTrades.forEach(sellTrade => {
                     const sellQuantity = parseFloat(sellTrade.quantity) || 0;
                     const sellPrice = parseFloat(sellTrade.price) || 0;
                     const sellBrokerage = (sellQuantity * sellPrice) * 0.0112;
                     const sellProceeds = (sellQuantity * sellPrice) - sellBrokerage;
 
-                    // Use weighted average buy price for consistent P&L calculation
-                    const avgBuyPrice = weightedAvgBuyPrice;
-                    const buyCost = (sellQuantity * avgBuyPrice);
+                    let remainingSellQuantity = sellQuantity;
+                    let totalBuyCost = 0;
+                    let totalMatchedQuantity = 0;
+                    let earliestBuyDate = null;
+
+                    // Match with buy trades using FIFO
+                    for (let i = 0; i < availableBuyTrades.length && remainingSellQuantity > 0; i++) {
+                        const buyTrade = availableBuyTrades[i];
+                        const availableQuantity = buyTrade.remainingQuantity || parseFloat(buyTrade.quantity) || 0;
+                        
+                        if (availableQuantity > 0) {
+                            const matchQuantity = Math.min(remainingSellQuantity, availableQuantity);
+                            const buyPrice = parseFloat(buyTrade.price) || 0;
+                            
+                            totalBuyCost += matchQuantity * buyPrice;
+                            totalMatchedQuantity += matchQuantity;
+                            remainingSellQuantity -= matchQuantity;
+                            
+                            // Update remaining quantity
+                            availableBuyTrades[i].remainingQuantity = availableQuantity - matchQuantity;
+                            
+                            // Track earliest buy date for duration calculation
+                            if (!earliestBuyDate || new Date(buyTrade.date) < earliestBuyDate) {
+                                earliestBuyDate = new Date(buyTrade.date);
+                            }
+                        }
+                    }
+
+                    // Calculate P&L using matched buy cost
+                    const avgBuyPrice = totalMatchedQuantity > 0 ? totalBuyCost / totalMatchedQuantity : 0;
+                    const buyCost = totalMatchedQuantity * avgBuyPrice;
                     const pnl = sellProceeds - buyCost;
                     const pnlPercent = buyCost > 0 ? (pnl / buyCost) * 100 : 0;
 
-                    // Calculate duration (use earliest buy date)
+                    // Calculate duration
                     const sellDate = new Date(sellTrade.date);
-                    const earliestBuyDate = buyTrades.length > 0 ? 
-                        new Date(Math.min(...buyTrades.map(t => new Date(t.date)))) : sellDate;
-                    const durationDays = Math.ceil((sellDate - earliestBuyDate) / (1000 * 60 * 60 * 24));
+                    const durationDays = earliestBuyDate ? 
+                        Math.ceil((sellDate - earliestBuyDate) / (1000 * 60 * 60 * 24)) : 0;
 
                     // Create sell entry with calculated values
                     const sellEntry = {
                         date: sellTrade.date,
                         symbol: symbol,
                         quantity: sellQuantity,
-                        price: sellPrice, // Current sell price
-                        avgBuyPrice: avgBuyPrice, // Weighted average buy price
+                        price: sellPrice,
+                        avgBuyPrice: avgBuyPrice,
                         totalValue: sellQuantity * sellPrice,
                         brokerage: sellBrokerage,
                         netValue: sellProceeds,
