@@ -691,135 +691,128 @@
             // Process each symbol's trades to match buy/sell pairs using FIFO
             Object.keys(tradesBySymbol).forEach(symbol => {
                 const symbolTrades = tradesBySymbol[symbol];
-                const buyTrades = [];
-                const sellTrades = [];
+                
+                // Sort all trades by date first (chronological order)
+                symbolTrades.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-                // Separate buy and sell trades
+                // Track available buy quantities for FIFO matching
+                const availableBuyTrades = [];
+                const allTradesForSymbol = [];
+
+                // Process trades in chronological order
                 symbolTrades.forEach(trade => {
                     const description = trade.description || '';
                     const isBuy = description.toLowerCase().includes('buy') || description.toLowerCase().includes('purchase');
                     const isSell = description.toLowerCase().includes('sale') || description.toLowerCase().includes('sell');
                     
                     if (isBuy) {
-                        buyTrades.push(trade);
-                    } else if (isSell) {
-                        sellTrades.push(trade);
-                    }
-                });
+                        const buyQuantity = parseFloat(trade.quantity) || 0;
+                        const buyPrice = parseFloat(trade.price) || 0;
+                        const buyBrokerage = (buyQuantity * buyPrice) * 0.0112;
 
-                // Sort buy trades by date (FIFO - First In, First Out)
-                buyTrades.sort((a, b) => new Date(a.date) - new Date(b.date));
-                sellTrades.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        const buyEntry = {
+                            date: trade.date,
+                            symbol: symbol,
+                            quantity: buyQuantity,
+                            price: buyPrice,
+                            avgBuyPrice: buyPrice,
+                            totalValue: buyQuantity * buyPrice,
+                            brokerage: buyBrokerage,
+                            netValue: (buyQuantity * buyPrice) + buyBrokerage,
+                            type: 'BUY',
+                            description: trade.description,
+                            settlementDate: trade.settlementDate,
+                            status: trade.status,
+                            pnl: 0,
+                            pnlPercent: 0,
+                            soldDate: '',
+                            duration: '',
+                            soldPrice: 0,
+                            sellOrderValue: 0,
+                            isMatched: false,
+                            remainingQuantity: buyQuantity // Track remaining quantity for FIFO
+                        };
 
-                // Create a copy of buy trades for FIFO matching
-                const availableBuyTrades = [...buyTrades];
-
-                // First, add all buy trades to the journal
-                buyTrades.forEach(buyTrade => {
-                    const buyQuantity = parseFloat(buyTrade.quantity) || 0;
-                    const buyPrice = parseFloat(buyTrade.price) || 0;
-                    const buyBrokerage = (buyQuantity * buyPrice) * 0.0112;
-
-                    const buyEntry = {
-                        date: buyTrade.date,
-                        symbol: symbol,
-                        quantity: buyQuantity,
-                        price: buyPrice,
-                        avgBuyPrice: buyPrice,
-                        totalValue: buyQuantity * buyPrice,
-                        brokerage: buyBrokerage,
-                        netValue: (buyQuantity * buyPrice) + buyBrokerage,
-                        type: 'BUY',
-                        description: buyTrade.description,
-                        settlementDate: buyTrade.settlementDate,
-                        status: buyTrade.status,
-                        pnl: 0,
-                        pnlPercent: 0,
-                        soldDate: '',
-                        duration: '',
-                        soldPrice: 0,
-                        sellOrderValue: 0,
-                        isMatched: false,
-                        remainingQuantity: buyQuantity // Track remaining quantity for FIFO
-                    };
-
-                    allTrades.push(buyEntry);
-                });
-
-                // Process each sell trade using FIFO matching
-                sellTrades.forEach(sellTrade => {
-                    const sellQuantity = parseFloat(sellTrade.quantity) || 0;
-                    const sellPrice = parseFloat(sellTrade.price) || 0;
-                    const sellBrokerage = (sellQuantity * sellPrice) * 0.0112;
-                    const sellProceeds = (sellQuantity * sellPrice) - sellBrokerage;
-
-                    let remainingSellQuantity = sellQuantity;
-                    let totalBuyCost = 0;
-                    let totalMatchedQuantity = 0;
-                    let earliestBuyDate = null;
-
-                    // Match with buy trades using FIFO
-                    for (let i = 0; i < availableBuyTrades.length && remainingSellQuantity > 0; i++) {
-                        const buyTrade = availableBuyTrades[i];
-                        const availableQuantity = buyTrade.remainingQuantity || parseFloat(buyTrade.quantity) || 0;
+                        availableBuyTrades.push(buyEntry);
+                        allTradesForSymbol.push(buyEntry);
                         
-                        if (availableQuantity > 0) {
-                            const matchQuantity = Math.min(remainingSellQuantity, availableQuantity);
-                            const buyPrice = parseFloat(buyTrade.price) || 0;
+                    } else if (isSell) {
+                        const sellQuantity = parseFloat(trade.quantity) || 0;
+                        const sellPrice = parseFloat(trade.price) || 0;
+                        const sellBrokerage = (sellQuantity * sellPrice) * 0.0112;
+                        const sellProceeds = (sellQuantity * sellPrice) - sellBrokerage;
+
+                        let remainingSellQuantity = sellQuantity;
+                        let totalBuyCost = 0;
+                        let totalMatchedQuantity = 0;
+                        let earliestBuyDate = null;
+
+                        // Match with available buy trades using FIFO
+                        for (let i = 0; i < availableBuyTrades.length && remainingSellQuantity > 0; i++) {
+                            const buyTrade = availableBuyTrades[i];
+                            const availableQuantity = buyTrade.remainingQuantity || 0;
                             
-                            totalBuyCost += matchQuantity * buyPrice;
-                            totalMatchedQuantity += matchQuantity;
-                            remainingSellQuantity -= matchQuantity;
-                            
-                            // Update remaining quantity
-                            availableBuyTrades[i].remainingQuantity = availableQuantity - matchQuantity;
-                            
-                            // Track earliest buy date for duration calculation
-                            if (!earliestBuyDate || new Date(buyTrade.date) < earliestBuyDate) {
-                                earliestBuyDate = new Date(buyTrade.date);
+                            if (availableQuantity > 0) {
+                                const matchQuantity = Math.min(remainingSellQuantity, availableQuantity);
+                                const buyPrice = parseFloat(buyTrade.price) || 0;
+                                
+                                totalBuyCost += matchQuantity * buyPrice;
+                                totalMatchedQuantity += matchQuantity;
+                                remainingSellQuantity -= matchQuantity;
+                                
+                                // Update remaining quantity
+                                availableBuyTrades[i].remainingQuantity = availableQuantity - matchQuantity;
+                                
+                                // Track earliest buy date for duration calculation
+                                if (!earliestBuyDate || new Date(buyTrade.date) < earliestBuyDate) {
+                                    earliestBuyDate = new Date(buyTrade.date);
+                                }
                             }
                         }
+
+                        // Calculate P&L using matched buy cost
+                        const avgBuyPrice = totalMatchedQuantity > 0 ? totalBuyCost / totalMatchedQuantity : 0;
+                        const buyCost = totalMatchedQuantity * avgBuyPrice;
+                        const pnl = sellProceeds - buyCost;
+                        const pnlPercent = buyCost > 0 ? (pnl / buyCost) * 100 : 0;
+
+                        // Calculate duration
+                        const sellDate = new Date(trade.date);
+                        const durationDays = earliestBuyDate ? 
+                            Math.max(0, Math.ceil((sellDate - earliestBuyDate) / (1000 * 60 * 60 * 24))) : 0;
+
+                        // Create sell entry with calculated values
+                        const sellEntry = {
+                            date: trade.date,
+                            symbol: symbol,
+                            quantity: sellQuantity,
+                            price: sellPrice,
+                            avgBuyPrice: avgBuyPrice,
+                            totalValue: sellQuantity * sellPrice,
+                            brokerage: sellBrokerage,
+                            netValue: sellProceeds,
+                            type: 'SELL',
+                            description: trade.description,
+                            settlementDate: trade.settlementDate,
+                            status: trade.status,
+                            pnl: pnl,
+                            pnlPercent: pnlPercent,
+                            soldDate: trade.date,
+                            duration: durationDays,
+                            soldPrice: sellPrice,
+                            sellOrderValue: sellQuantity * sellPrice,
+                            isMatched: true
+                        };
+
+                        allTradesForSymbol.push(sellEntry);
                     }
-
-                    // Calculate P&L using matched buy cost
-                    const avgBuyPrice = totalMatchedQuantity > 0 ? totalBuyCost / totalMatchedQuantity : 0;
-                    const buyCost = totalMatchedQuantity * avgBuyPrice;
-                    const pnl = sellProceeds - buyCost;
-                    const pnlPercent = buyCost > 0 ? (pnl / buyCost) * 100 : 0;
-
-                    // Calculate duration
-                    const sellDate = new Date(sellTrade.date);
-                    const durationDays = earliestBuyDate ? 
-                        Math.ceil((sellDate - earliestBuyDate) / (1000 * 60 * 60 * 24)) : 0;
-
-                    // Create sell entry with calculated values
-                    const sellEntry = {
-                        date: sellTrade.date,
-                        symbol: symbol,
-                        quantity: sellQuantity,
-                        price: sellPrice,
-                        avgBuyPrice: avgBuyPrice,
-                        totalValue: sellQuantity * sellPrice,
-                        brokerage: sellBrokerage,
-                        netValue: sellProceeds,
-                        type: 'SELL',
-                        description: sellTrade.description,
-                        settlementDate: sellTrade.settlementDate,
-                        status: sellTrade.status,
-                        pnl: pnl,
-                        pnlPercent: pnlPercent,
-                        soldDate: sellTrade.date,
-                        duration: durationDays,
-                        soldPrice: sellPrice,
-                        sellOrderValue: sellQuantity * sellPrice,
-                        isMatched: true
-                    };
-
-                    allTrades.push(sellEntry);
                 });
+
+                // Add all trades for this symbol to the main array
+                allTrades.push(...allTradesForSymbol);
             });
 
-            // Sort all trades by date
+            // Sort all trades by date (chronological order - oldest first)
             allTrades.sort((a, b) => new Date(a.date) - new Date(b.date));
 
             // Create table rows
@@ -862,7 +855,7 @@
                         <span class="px-2 py-1 text-xs font-medium ${typeColor} rounded-full">${trade.type}</span>
                     </td>
                     <td class="px-3 py-2 text-sm text-gray-500">${trade.soldDate}</td>
-                    <td class="px-3 py-2 text-sm text-gray-500 text-right">${trade.duration ? trade.duration + ' days' : ''}</td>
+                    <td class="px-3 py-2 text-sm text-gray-500 text-right">${trade.duration !== undefined && trade.duration !== null ? trade.duration + ' days' : '0 days'}</td>
                     <td class="px-3 py-2 text-sm text-gray-500 text-right">${trade.soldPrice > 0 ? 'Rs. ' + formatNumber(trade.soldPrice) : ''}</td>
                     <td class="px-3 py-2 text-sm text-gray-500 text-right">${trade.sellOrderValue > 0 ? 'Rs. ' + formatNumber(trade.sellOrderValue) : ''}</td>
                     <td class="px-3 py-2 text-sm text-right ${pnlColor}">
@@ -1002,7 +995,7 @@
             
             $('#tradingJournalTable').DataTable({
                 pageLength: 25,
-                order: [[0, 'desc']], // Sort by date descending
+                order: [[0, 'asc']], // Sort by date ascending (chronological order)
                 columnDefs: [
                     { targets: [2, 3, 4, 7, 8, 9, 10, 11, 12], className: 'text-right' },
                     { targets: [5], className: 'text-center' },
