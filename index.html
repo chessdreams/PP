@@ -11,6 +11,9 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    maxWidth: {
+                        '8xl': '88rem',
+                    },
                     fontFamily: {
                         'sans': ['Inter', 'system-ui', 'sans-serif'],
                     },
@@ -456,7 +459,7 @@
 
         <!-- Professional Header -->
         <header class="bg-white shadow-sm border-b sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex justify-between items-center py-4">
                     <!-- Logo and Brand -->
                     <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
@@ -518,7 +521,7 @@
         </header>
 
         <!-- Main Content Container -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
             <!-- Dashboard Content (Initially Hidden) -->
             <div id="dashboardContent" class="hidden">
@@ -549,6 +552,17 @@
                     <div class="metric-card">
                         <div class="metric-label">Total Return %</div>
                         <div id="totalReturn" class="metric-value">0.00%</div>
+                    </div>
+                </div>
+
+                <!-- Trade Execution Summary (if available) -->
+                <div id="tradeExecutionSummary"></div>
+
+                <!-- Portfolios by Date and Key (if available) -->
+                <div id="groupedPortfoliosSection" class="hidden mb-8">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Portfolios by Date and Key</h3>
+                    <div id="groupedPortfoliosList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Grouped portfolios will be displayed here -->
                     </div>
                 </div>
 
@@ -685,12 +699,66 @@
                         <p class="text-sm text-gray-500 mt-1">Supports CSV, Excel (.xlsx, .xls) files</p>
                     </div>
                     
+                    <!-- Trade Execution Summary Section -->
+                    <div class="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <h3 class="text-lg font-semibold text-orange-900 mb-3">Trade Execution Summary (Optional)</h3>
+                        <div>
+                            <label for="tradeExecutionFile" class="block text-sm font-medium text-orange-800 mb-2">Select Trade Execution Summary File:</label>
+                            <input type="file" id="tradeExecutionFile" accept=".xlsx,.xls" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100">
+                            <p class="text-sm text-orange-600 mt-1">Upload your trade execution summary Excel file for accurate buy/sell tracking</p>
+                            <div class="mt-2 text-xs text-orange-700">
+                                <p><strong>Expected format:</strong> Security, Side (BUY/SELL), Avg Price, Executed Quantity, Gross Amount</p>
+                                <p><strong>Benefits:</strong> Accurate sold prices, precise P&L calculations, detailed trade journal</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="flex space-x-4">
-                        <button id="uploadBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                        <button id="previewBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            🔍 Preview & Verify Dates
+                        </button>
+                        <button id="uploadBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors hidden">
                             📤 Upload & Process Files
                         </button>
                         <button id="clearDataBtn" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors hidden">
                             🗑️ Clear Data
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Date Verification Section (Hidden by default) -->
+                <div id="dateVerificationSection" class="hidden mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-yellow-900">Verify Portfolio Dates</h3>
+                            <p class="text-sm text-yellow-700">Please verify the extracted dates for each file. You can modify them if needed.</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <label class="text-sm text-yellow-800 font-medium">Sort by:</label>
+                            <select id="sortFilesSelect" class="px-3 py-1 border border-yellow-300 rounded-md text-sm bg-white">
+                                <option value="filename-asc">📄 Filename (A-Z)</option>
+                                <option value="filename-desc">📄 Filename (Z-A)</option>
+                                <option value="date-asc">📅 Date (Oldest First)</option>
+                                <option value="date-desc">📅 Date (Newest First)</option>
+                                <option value="source-asc">🔍 Source (A-Z)</option>
+                                <option value="source-desc">🔍 Source (Z-A)</option>
+                                <option value="original">🔄 Original Order</option>
+                            </select>
+                            <span id="sortStatus" class="text-xs text-yellow-600 font-medium"></span>
+                        </div>
+                    </div>
+                    <div id="dateVerificationList" class="space-y-3">
+                        <!-- Date verification items will be displayed here -->
+                    </div>
+                    <div class="flex space-x-4 mt-4">
+                        <button id="confirmDatesBtn" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            ✅ Confirm & Upload
+                        </button>
+                        <button id="rejectDuplicatesBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            🗑️ Reject All Duplicates
+                        </button>
+                        <button id="cancelDatesBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            ❌ Cancel
                         </button>
                     </div>
                 </div>
@@ -716,12 +784,20 @@
                             <li>Portfolios are automatically sorted by date for proper comparison order</li>
                         </ol>
                         
-                        <h4 class="font-semibold mb-2 text-blue-900">Multiple CSV Upload:</h4>
+                        <h4 class="font-semibold mb-2 text-blue-900">Multiple File Upload with Date Verification:</h4>
                         <ul class="list-disc list-inside ml-4 space-y-1 mb-4">
-                            <li>Select multiple CSV files using Ctrl+Click (or Cmd+Click on Mac)</li>
-                            <li>All files are processed together</li>
-                            <li>Securities with the same name are automatically aggregated</li>
-                            <li>Dashboard shows only the final combined result</li>
+                            <li>Select multiple portfolio files using Ctrl+Click (or Cmd+Click on Mac)</li>
+                            <li>Click "Preview & Verify Dates" to see extracted dates for each file</li>
+                            <li>Use the "Sort by" dropdown to organize files for easy review</li>
+                            <li>Verify and modify dates as needed using the date picker</li>
+                            <li><strong>Portfolio Key:</strong> Enter a key (e.g., HDF, DSA, ARR) for each file</li>
+                            <li><strong>Auto Key Extraction:</strong> Keys are automatically extracted from A1 cell content (text between "(" and "/" characters)</li>
+                            <li><strong>Duplicate Detection:</strong> Files with same dates are highlighted in red</li>
+                            <li><strong>Individual Rejection:</strong> Click "❌ Reject" to exclude specific files</li>
+                            <li><strong>Bulk Rejection:</strong> Click "🗑️ Reject All Duplicates" to keep only first file per date</li>
+                            <li>Click "Confirm & Upload" to process accepted files with verified dates</li>
+                            <li><strong>Dual View:</strong> See both individual portfolios by key and combined portfolios by date</li>
+                            <li>Dashboard shows portfolios organized by date with individual keys and combined totals</li>
                         </ul>
                         
                         <h4 class="font-semibold mb-2 text-blue-900">Expected File Format:</h4>
@@ -733,6 +809,15 @@
                             <li>Market Value - Current market value</li>
                             <li>Unrealized Gain / (Loss) - Unrealized profit/loss</li>
                             <li>Unrealized Gain/Loss % - Return percentage</li>
+                        </ul>
+                        
+                        <h4 class="font-semibold mb-2 text-blue-900">Trade Execution Summary (Optional):</h4>
+                        <ul class="list-disc list-inside ml-4 space-y-1 mb-4">
+                            <li>Upload your broker's trade execution summary Excel file</li>
+                            <li>Provides accurate buy/sell prices and transaction details</li>
+                            <li>Enables precise P&L calculations with exact sold prices</li>
+                            <li>Creates detailed trading journal with individual transactions</li>
+                            <li>Expected columns: Security, Side (BUY/SELL), Avg Price, Executed Quantity, Gross Amount</li>
                         </ul>
                         
                         <h4 class="font-semibold mb-2 text-blue-900">Supported Formats:</h4>
@@ -936,6 +1021,16 @@
 
                 <!-- Table View Container (Hidden by default) -->
                 <div id="tableViewContainer" class="hidden">
+                    <!-- Filter Controls -->
+                    <div class="mb-4 flex items-center space-x-4">
+                        <label class="text-sm font-medium text-gray-700">Filter by Key:</label>
+                        <select id="keyFilter" class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white">
+                            <option value="CMB" selected>CMB (Combined)</option>
+                            <option value="ALL">All Keys</option>
+                        </select>
+                        <span id="filterStatus" class="text-xs text-gray-500"></span>
+                    </div>
+                    
                     <div class="overflow-x-auto">
                         <table id="portfolioManagementTable" class="w-full bg-white border border-gray-200 rounded-lg">
                             <thead class="bg-gray-50">
@@ -944,6 +1039,7 @@
                                         <input type="checkbox" id="selectAllTable" class="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
                                     </th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Portfolio</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Securities</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
@@ -988,6 +1084,9 @@
                             <button id="showTradeAnalysisBtn" class="bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
                                 💰 Trade Analysis
                             </button>
+                            <a href="tradelog.html" class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                                📊 Trade Log
+                            </a>
                         </div>
                     </div>
                     
@@ -1263,13 +1362,41 @@
                 </div>
             </div>
 
-            <!-- Comparison Summary Cards (Hidden by default) -->
-            <div id="comparisonCards" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 shadow-2xl border border-blue-200">
-                    <h3 class="text-blue-600 text-sm font-medium">Portfolio Value Change</h3>
-                    <p id="valueChange" class="text-2xl font-bold text-blue-900">Rs. 0</p>
-                    <p id="valueChangePercent" class="text-sm text-blue-600">0.00%</p>
+            <!-- Trade Execution Summary (if available) -->
+            <div id="tradeExecutionSummary"></div>
+
+            <!-- Portfolios by Date and Key (if available) -->
+            <div id="groupedPortfoliosSection" class="hidden mb-8">
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">Portfolios by Date and Key</h3>
+                <div id="groupedPortfoliosList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Grouped portfolios will be displayed here -->
                 </div>
+            </div>
+
+            <!-- Comparison Summary Cards (Hidden by default) -->
+            <div id="comparisonCards" class="hidden mb-8">
+                <!-- Portfolio Date Information -->
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 shadow-2xl border border-gray-200 mb-6">
+                    <h3 class="text-gray-600 text-sm font-medium mb-2">Portfolio Comparison Period</h3>
+                    <div class="flex justify-between items-center">
+                        <div class="text-center">
+                            <p class="text-gray-500 text-xs">Initial Portfolio</p>
+                            <p id="initialPortfolioDate" class="text-lg font-bold text-gray-900">-</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-gray-500 text-xs">Current Portfolio</p>
+                            <p id="currentPortfolioDate" class="text-lg font-bold text-gray-900">-</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Comparison Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 shadow-2xl border border-blue-200">
+                        <h3 class="text-blue-600 text-sm font-medium">Portfolio Value Change</h3>
+                        <p id="valueChange" class="text-2xl font-bold text-blue-900">Rs. 0</p>
+                        <p id="valueChangePercent" class="text-sm text-blue-600">0.00%</p>
+                    </div>
                 <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 shadow-2xl border border-green-200">
                     <h3 class="text-green-600 text-sm font-medium">P&L Change</h3>
                     <p id="pnlChange" class="text-2xl font-bold text-green-900">Rs. 0</p>
@@ -1309,6 +1436,12 @@
                     <h3 class="text-center text-gray-700 text-xl font-semibold mb-6">Performance by Sector</h3>
                     <canvas id="sectorPerformanceChart" class="max-h-full w-full"></canvas>
                 </div>
+            </div>
+
+            <!-- Diversification Chart -->
+            <div class="professional-card p-6 mb-8">
+                <h3 class="text-center text-gray-700 text-xl font-semibold mb-6">Portfolio Diversification</h3>
+                <div id="diversificationChart" class="chart-container" style="height: 600px;"></div>
             </div>
 
             <!-- Portfolio Table -->
@@ -1377,7 +1510,20 @@
             <!-- Comparison Table (Hidden by default) -->
             <div id="comparisonTable" class="hidden professional-card mb-8 p-6">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-center text-gray-700 text-xl font-semibold">Portfolio Comparison - Changes Over Time</h3>
+                    <div class="text-center">
+                        <h3 class="text-gray-700 text-xl font-semibold">Portfolio Comparison - Changes Over Time</h3>
+                        <div class="flex justify-center items-center space-x-6 mt-3">
+                            <div class="bg-blue-50 px-4 py-2 rounded-lg border border-blue-200">
+                                <span class="text-xs text-blue-600 font-medium">INITIAL PORTFOLIO</span>
+                                <div id="comparisonInitialDate" class="text-lg font-bold text-blue-900">-</div>
+                            </div>
+                            <div class="text-gray-400 text-2xl">→</div>
+                            <div class="bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+                                <span class="text-xs text-green-600 font-medium">CURRENT PORTFOLIO</span>
+                                <div id="comparisonCurrentDate" class="text-lg font-bold text-green-900">-</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex items-center space-x-3">
                         <button id="exportComparisonTableBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                             📊 Export
@@ -1407,7 +1553,68 @@
             </div>
 
         </div>
-        
+
+        <!-- New Portfolio Comparison Table -->
+        <div id="newComparisonTable" class="hidden professional-card mb-8 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">📊 Portfolio Comparison</h2>
+                <div class="flex items-center space-x-3">
+                    <button id="exportNewComparisonBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                        📊 Export
+                    </button>
+                    <button id="printNewComparisonBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+                        🖨️ Print
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 class="text-sm font-medium text-blue-800 mb-2">Portfolio Changes:</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="text-center">
+                        <div class="text-green-600 font-semibold">Added</div>
+                        <div id="addedCount" class="text-lg font-bold text-green-700">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-blue-600 font-semibold">Modified</div>
+                        <div id="modifiedCount" class="text-lg font-bold text-blue-700">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-red-600 font-semibold">Removed</div>
+                        <div id="removedCount" class="text-lg font-bold text-red-700">0</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-gray-600 font-semibold">Unchanged</div>
+                        <div id="unchangedCount" class="text-lg font-bold text-gray-700">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table id="newComparisonDataTable" class="w-full">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-sm font-medium text-gray-700 border-b">Security</th>
+                            <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 border-b">Status</th>
+                            <th class="px-4 py-3 text-right text-sm font-medium text-gray-700 border-b">Quantity Change</th>
+                            <th class="px-4 py-3 text-right text-sm font-medium text-gray-700 border-b">Market Value Change</th>
+                            <th class="px-4 py-3 text-right text-sm font-medium text-gray-700 border-b">P&L Change</th>
+                            <th class="px-4 py-3 text-right text-sm font-medium text-gray-700 border-b">Return % Change</th>
+                            <th class="px-4 py-3 text-center text-sm font-medium text-gray-700 border-b">Sector</th>
+                        </tr>
+                    </thead>
+                    <tbody id="newComparisonTableBody">
+                        <tr>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">No comparison data available</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Portfolio Diversification Chart - REMOVED (Now handled in separate pages) -->
+        </div>
+
         <!-- Target Price Management Section -->
         <div id="targetPriceSection" class="hidden professional-card mb-8 p-6">
                 <div class="flex justify-between items-center mb-6">
@@ -1471,9 +1678,6 @@
                         </div>
                     </div>
                 </div>
-        </div>
-
-        <!-- Portfolio Diversification Chart - REMOVED (Now handled in separate pages) -->
         </div>
     </div>
 
@@ -2106,7 +2310,29 @@
             
             tableBody.innerHTML = '';
             
-            portfolios.forEach(portfolio => {
+            // Get current filter value
+            const keyFilter = document.getElementById('keyFilter');
+            const selectedKey = keyFilter ? keyFilter.value : 'CMB';
+            
+            // Filter portfolios based on selected key
+            let filteredPortfolios = portfolios;
+            if (selectedKey !== 'ALL') {
+                filteredPortfolios = portfolios.filter(portfolio => {
+                    const portfolioKey = portfolio.metadata?.key || 'DEFAULT';
+                    return selectedKey === 'CMB' ? portfolioKey === 'COMBINED' : portfolioKey === selectedKey;
+                });
+            }
+            
+            // Update filter dropdown options based on available keys
+            updateKeyFilterOptions(portfolios);
+            
+            // Update filter status
+            const filterStatus = document.getElementById('filterStatus');
+            if (filterStatus) {
+                filterStatus.textContent = `Showing ${filteredPortfolios.length} of ${portfolios.length} portfolios`;
+            }
+            
+            filteredPortfolios.forEach(portfolio => {
                 const row = createPortfolioTableRow(portfolio);
                 tableBody.appendChild(row);
             });
@@ -2132,6 +2358,11 @@
                         <div class="text-sm font-medium text-gray-900">${portfolio.name}</div>
                         ${portfolio.description ? `<div class="text-sm text-gray-500">${portfolio.description}</div>` : ''}
                     </div>
+                </td>
+                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full ${portfolio.metadata?.key === 'COMBINED' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}">
+                        ${portfolio.metadata?.key === 'COMBINED' ? 'CMB' : (portfolio.metadata?.key || 'DEFAULT')}
+                    </span>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${getDateFromPortfolioName(portfolio.name)}</td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">${portfolio.holdings.length}</td>
@@ -2632,9 +2863,10 @@
                         // Show comparison elements
                         document.getElementById('comparisonCards').classList.remove('hidden');
                         document.getElementById('comparisonTable').classList.remove('hidden');
+                        document.getElementById('newComparisonTable').classList.remove('hidden');
                         
                         // Calculate and display comparison data
-                        calculateComparisonData(initialPortfolio, portfolioData);
+                        populateNewComparisonTable(initialPortfolio, portfolioData);
                         
                         // Refresh dashboard
                         refreshDashboard();
@@ -2829,16 +3061,21 @@
         // Function to refresh dashboard with current combined data
         function refreshDashboard() {
             try {
+                console.log('refreshDashboard called with:', portfolioData?.length, 'items');
                 // Check if we have data to display
                 if (!portfolioData || portfolioData.length === 0) {
+                    console.log('No portfolio data, skipping dashboard refresh');
                     return;
                 }
                 
                 // Check if dashboard is visible
                 const dashboardContent = document.getElementById('dashboardContent');
                 if (!dashboardContent || dashboardContent.classList.contains('hidden')) {
+                    console.log('Dashboard not visible, skipping refresh');
                     return;
                 }
+                
+                console.log('Dashboard is visible, proceeding with refresh');
                 
                 // Clean up all existing charts
                 cleanupCharts();
@@ -2867,7 +3104,7 @@
                     
                     // If in comparison mode, also refresh comparison data
                     if (comparisonMode && initialPortfolio && portfolioData.length > 0) {
-                        calculateComparisonData(initialPortfolio, portfolioData);
+                        populateNewComparisonTable(initialPortfolio, portfolioData);
                     }
                 }, 1000);
                 
@@ -2938,27 +3175,899 @@
         } catch (error) {
         }
 
+        // Extract key from A1 cell content (e.g., "Portfolio (HDF/" -> "HDF")
+        function extractKeyFromA1Cell(workbook) {
+            try {
+                if (!workbook || !workbook.SheetNames || workbook.SheetNames.length === 0) {
+                    return '';
+                }
+                
+                // Get the first sheet
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                if (!worksheet) {
+                    return '';
+                }
+                
+                // Get A1 cell value
+                const a1Cell = worksheet['A1'];
+                if (!a1Cell || !a1Cell.v) {
+                    return '';
+                }
+                
+                const a1Value = a1Cell.v.toString();
+                console.log('A1 cell value:', a1Value);
+                
+                // Extract text between "(" and "/" characters
+                const pattern = /\(([^/)]+)\//;
+                const match = a1Value.match(pattern);
+                
+                if (match && match[1]) {
+                    const key = match[1].trim().toUpperCase();
+                    console.log('Extracted key from A1:', key);
+                    return key;
+                }
+                
+                // Fallback: try to extract from filename if A1 doesn't have the pattern
+                console.log('No key pattern found in A1, trying filename fallback');
+                return '';
+            } catch (error) {
+                console.error('Error extracting key from A1 cell:', error);
+                return '';
+            }
+        }
+
+        // Fallback: Extract key from filename (e.g., "Portfolio (HDF/" -> "HDF")
+        function extractKeyFromFilename(filename) {
+            try {
+                // Pattern 1: Portfolio (KEY/ or Portfolio (KEY)
+                const pattern1 = /Portfolio\s*\(([^/)]+)/i;
+                const match1 = filename.match(pattern1);
+                if (match1) {
+                    return match1[1].trim().toUpperCase();
+                }
+                
+                // Pattern 2: KEY_ or KEY- at the beginning
+                const pattern2 = /^([A-Z]{2,4})[_\-]/i;
+                const match2 = filename.match(pattern2);
+                if (match2) {
+                    return match2[1].trim().toUpperCase();
+                }
+                
+                // Pattern 3: _KEY or -KEY in the middle
+                const pattern3 = /[_\-]([A-Z]{2,4})[_\-]/i;
+                const match3 = filename.match(pattern3);
+                if (match3) {
+                    return match3[1].trim().toUpperCase();
+                }
+                
+                // Pattern 4: KEY at the end before extension
+                const pattern4 = /([A-Z]{2,4})\.(xlsx?|csv)$/i;
+                const match4 = filename.match(pattern4);
+                if (match4) {
+                    return match4[1].trim().toUpperCase();
+                }
+                
+                return '';
+            } catch (error) {
+                console.error('Error extracting key from filename:', error);
+                return '';
+            }
+        }
+
+        // Show date verification for files
+        async function showDateVerification(files, tradeExecutionFile) {
+            try {
+                const dateVerificationSection = document.getElementById('dateVerificationSection');
+                const dateVerificationList = document.getElementById('dateVerificationList');
+                const previewBtn = document.getElementById('previewBtn');
+                const uploadBtn = document.getElementById('uploadBtn');
+                
+                if (!dateVerificationSection || !dateVerificationList) {
+                    return;
+                }
+                
+                // Show verification section
+                dateVerificationSection.classList.remove('hidden');
+                previewBtn.classList.add('hidden');
+                uploadBtn.classList.remove('hidden');
+                
+                // Clear existing content
+                dateVerificationList.innerHTML = '';
+                
+                // Store file data with dates for later processing
+                window.pendingFileData = [];
+                window.rejectedFiles = new Set();
+                
+                // Process each file to extract dates
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    
+                    try {
+                        const fileData = await readFileAsync(file);
+                        let extractedDate = new Date();
+                        let dateSource = 'Current Date';
+                        
+                        let extractedKey = '';
+                        
+                        if (fileData.type === 'excel') {
+                            extractedDate = extractFileCreationDate(file, fileData.data);
+                            extractedKey = extractKeyFromA1Cell(fileData.data);
+                            
+                            // Fallback to filename if A1 extraction failed
+                            if (!extractedKey) {
+                                extractedKey = extractKeyFromFilename(file.name);
+                            }
+                            
+                            // Determine date source
+                            if (fileData.data && fileData.data.Props && fileData.data.Props.CreatedDate) {
+                                dateSource = 'Excel Metadata';
+                            } else if (file.name.match(/(\d{4})-(\d{2})-(\d{2})|(\d{4})(\d{2})(\d{2})|(\d{2})-(\d{2})-(\d{4})/)) {
+                                dateSource = 'Filename Pattern';
+                            } else if (file.lastModified) {
+                                dateSource = 'File Modified Date';
+                            }
+                        } else if (file.lastModified) {
+                            extractedDate = new Date(file.lastModified);
+                            extractedKey = extractKeyFromFilename(file.name);
+                            dateSource = 'File Modified Date';
+                        }
+                        
+                        const dateString = extractedDate.toISOString().split('T')[0];
+                        
+                        // Create verification item
+                        const verificationItem = document.createElement('div');
+                        verificationItem.className = 'flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200';
+                        verificationItem.innerHTML = `
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-900">${file.name}</div>
+                                <div class="text-sm text-gray-500">Source: ${dateSource}</div>
+                            </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="date" 
+                                   class="px-3 py-1 border border-gray-300 rounded-md text-sm" 
+                                   value="${dateString}"
+                                   data-file-index="${i}">
+                            <span class="text-xs text-gray-500">Portfolio Date</span>
+                            <input type="text" 
+                                   class="px-2 py-1 border border-gray-300 rounded-md text-xs w-16 text-center" 
+                                   placeholder="Key" 
+                                   value="${extractedKey}"
+                                   data-file-index="${i}"
+                                   maxlength="10">
+                            <span class="text-xs text-gray-500">Key</span>
+                            <button type="button" 
+                                    class="px-2 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors reject-file-btn"
+                                    data-file-index="${i}">
+                                ❌ Reject
+                            </button>
+                        </div>
+                        `;
+                        
+                        dateVerificationList.appendChild(verificationItem);
+                        
+                        // Store file data
+                        window.pendingFileData.push({
+                            file: file,
+                            fileData: fileData,
+                            extractedDate: extractedDate,
+                            dateSource: dateSource
+                        });
+                        
+                    } catch (error) {
+                        console.error(`Error processing file ${file.name}:`, error);
+                        
+                        // Add error item
+                        const errorItem = document.createElement('div');
+                        errorItem.className = 'flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200';
+                        errorItem.innerHTML = `
+                            <div class="flex-1">
+                                <div class="font-medium text-red-900">${file.name}</div>
+                                <div class="text-sm text-red-600">Error: ${error.message}</div>
+                            </div>
+                            <div class="text-red-500">❌</div>
+                        `;
+                        dateVerificationList.appendChild(errorItem);
+                    }
+                }
+                
+                // Process trade execution file if provided
+                if (tradeExecutionFile) {
+                    try {
+                        const tradeFileData = await readFileAsync(tradeExecutionFile);
+                        const extractedDate = extractFileCreationDate(tradeExecutionFile, tradeFileData.data);
+                        const dateString = extractedDate.toISOString().split('T')[0];
+                        
+                        const tradeItem = document.createElement('div');
+                        tradeItem.className = 'flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200';
+                        tradeItem.innerHTML = `
+                            <div class="flex-1">
+                                <div class="font-medium text-blue-900">${tradeExecutionFile.name}</div>
+                                <div class="text-sm text-blue-600">Trade Execution Summary</div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <input type="date" 
+                                       class="px-3 py-1 border border-gray-300 rounded-md text-sm" 
+                                       value="${dateString}"
+                                       data-trade-file="true">
+                                <span class="text-xs text-gray-500">Trade Date</span>
+                            </div>
+                        `;
+                        
+                        dateVerificationList.appendChild(tradeItem);
+                        
+                        // Store trade execution data
+                        window.pendingTradeExecutionFile = {
+                            file: tradeExecutionFile,
+                            fileData: tradeFileData,
+                            extractedDate: extractedDate
+                        };
+                        
+                    } catch (error) {
+                        console.error(`Error processing trade execution file:`, error);
+                    }
+                }
+                
+                // Add duplicate detection and rejection handlers
+                addDuplicateDetectionAndRejectionHandlers();
+                
+                // Add sorting functionality
+                addSortingFunctionality();
+                
+                // Set default sort to date (oldest first) and apply it
+                const sortSelect = document.getElementById('sortFilesSelect');
+                if (sortSelect) {
+                    sortSelect.value = 'date-asc';
+                    sortVerificationList('date-asc');
+                }
+                
+            } catch (error) {
+                console.error('Error showing date verification:', error);
+                alert('Error processing files: ' + error.message);
+            }
+        }
+        
+        // Add duplicate detection and file rejection handlers
+        function addDuplicateDetectionAndRejectionHandlers() {
+            // Add rejection button handlers
+            document.querySelectorAll('.reject-file-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const fileIndex = this.getAttribute('data-file-index');
+                    const verificationItem = this.closest('.flex.items-center.justify-between');
+                    
+                    if (verificationItem) {
+                        // Mark as rejected
+                        window.rejectedFiles.add(parseInt(fileIndex));
+                        
+                        // Update UI
+                        verificationItem.classList.add('opacity-50', 'bg-red-50');
+                        verificationItem.classList.remove('bg-white');
+                        
+                        // Update button
+                        this.textContent = '✅ Rejected';
+                        this.classList.remove('bg-red-100', 'hover:bg-red-200', 'text-red-700');
+                        this.classList.add('bg-green-100', 'text-green-700');
+                        this.disabled = true;
+                        
+                        // Check for duplicates
+                        checkForDuplicates();
+                    }
+                });
+            });
+            
+            // Add date change handlers for duplicate detection
+            document.querySelectorAll('input[type="date"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    checkForDuplicates();
+                });
+            });
+            
+            // Add key change handlers for key validation
+            document.querySelectorAll('input[placeholder="Key"]').forEach(input => {
+                input.addEventListener('input', function() {
+                    validateKeys();
+                });
+            });
+        }
+        
+        // Check for duplicate dates and highlight them
+        function checkForDuplicates() {
+            const dateInputs = document.querySelectorAll('input[type="date"]:not([data-trade-file="true"])');
+            const dateGroups = {};
+            
+            // Group files by date
+            dateInputs.forEach((input, index) => {
+                if (!window.rejectedFiles.has(index)) {
+                    const date = input.value;
+                    if (!dateGroups[date]) {
+                        dateGroups[date] = [];
+                    }
+                    dateGroups[date].push({ input, index });
+                }
+            });
+            
+            // Reset all styling
+            dateInputs.forEach(input => {
+                input.classList.remove('border-red-500', 'bg-red-50');
+                input.classList.add('border-gray-300');
+            });
+            
+            // Highlight duplicates
+            Object.keys(dateGroups).forEach(date => {
+                const files = dateGroups[date];
+                if (files.length > 1) {
+                    files.forEach(({ input, index }) => {
+                        input.classList.remove('border-gray-300');
+                        input.classList.add('border-red-500', 'bg-red-50');
+                    });
+                    
+                    // Show duplicate warning
+                    showDuplicateWarning(date, files.length);
+                }
+            });
+        }
+        
+        // Show duplicate warning
+        function showDuplicateWarning(date, count) {
+            // Remove existing warning
+            const existingWarning = document.getElementById('duplicateWarning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Create warning
+            const warning = document.createElement('div');
+            warning.id = 'duplicateWarning';
+            warning.className = 'mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg';
+            warning.innerHTML = `
+                <div class="flex items-center">
+                    <span class="text-yellow-600 mr-2">⚠️</span>
+                    <div>
+                        <p class="text-sm font-medium text-yellow-800">Duplicate Date Detected</p>
+                        <p class="text-xs text-yellow-700">${count} files have the same date (${date}). Consider rejecting some files or changing their dates.</p>
+                    </div>
+                </div>
+            `;
+            
+            // Insert after date verification list
+            const dateVerificationList = document.getElementById('dateVerificationList');
+            if (dateVerificationList) {
+                dateVerificationList.parentNode.insertBefore(warning, dateVerificationList.nextSibling);
+            }
+        }
+        
+        // Add sorting functionality
+        function addSortingFunctionality() {
+            const sortSelect = document.getElementById('sortFilesSelect');
+            if (!sortSelect) return;
+            
+            sortSelect.addEventListener('change', function() {
+                const sortValue = this.value;
+                sortVerificationList(sortValue);
+            });
+        }
+        
+        // Sort the verification list
+        function sortVerificationList(sortBy) {
+            const verificationList = document.getElementById('dateVerificationList');
+            const sortStatus = document.getElementById('sortStatus');
+            if (!verificationList) return;
+            
+            const items = Array.from(verificationList.children);
+            
+            // Separate rejected and non-rejected items
+            const rejectedItems = items.filter(item => item.classList.contains('opacity-50'));
+            const activeItems = items.filter(item => !item.classList.contains('opacity-50'));
+            
+            // Sort active items based on the selected criteria
+            activeItems.sort((a, b) => {
+                switch (sortBy) {
+                    case 'filename-asc':
+                        return getFileName(a).localeCompare(getFileName(b));
+                    case 'filename-desc':
+                        return getFileName(b).localeCompare(getFileName(a));
+                    case 'date-asc':
+                        return new Date(getDateValue(a)) - new Date(getDateValue(b));
+                    case 'date-desc':
+                        return new Date(getDateValue(b)) - new Date(getDateValue(a));
+                    case 'source-asc':
+                        return getSourceText(a).localeCompare(getSourceText(b));
+                    case 'source-desc':
+                        return getSourceText(b).localeCompare(getSourceText(a));
+                    case 'original':
+                        return parseInt(a.querySelector('input[type="date"]')?.getAttribute('data-file-index') || 0) - 
+                               parseInt(b.querySelector('input[type="date"]')?.getAttribute('data-file-index') || 0);
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Clear and re-append sorted items (active first, then rejected)
+            verificationList.innerHTML = '';
+            activeItems.forEach(item => {
+                verificationList.appendChild(item);
+            });
+            rejectedItems.forEach(item => {
+                verificationList.appendChild(item);
+            });
+            
+            // Update sort status
+            if (sortStatus) {
+                const sortLabels = {
+                    'filename-asc': 'Sorted by filename (A-Z)',
+                    'filename-desc': 'Sorted by filename (Z-A)',
+                    'date-asc': 'Sorted by date (oldest first)',
+                    'date-desc': 'Sorted by date (newest first)',
+                    'source-asc': 'Sorted by source (A-Z)',
+                    'source-desc': 'Sorted by source (Z-A)',
+                    'original': 'Original order'
+                };
+                sortStatus.textContent = sortLabels[sortBy] || '';
+            }
+            
+            // Re-add event handlers after reordering
+            addDuplicateDetectionAndRejectionHandlers();
+        }
+        
+        // Helper functions to extract data for sorting
+        function getFileName(item) {
+            const nameElement = item.querySelector('.font-medium.text-gray-900');
+            return nameElement ? nameElement.textContent : '';
+        }
+        
+        function getDateValue(item) {
+            const dateInput = item.querySelector('input[type="date"]');
+            return dateInput ? dateInput.value : '';
+        }
+        
+        function getSourceText(item) {
+            const sourceElement = item.querySelector('.text-sm.text-gray-500');
+            return sourceElement ? sourceElement.textContent : '';
+        }
+        
+        // Validate keys for duplicate keys on same date
+        function validateKeys() {
+            const keyInputs = document.querySelectorAll('input[placeholder="Key"]');
+            const dateKeyGroups = {};
+            
+            // Group by date and key
+            keyInputs.forEach((keyInput, index) => {
+                if (!window.rejectedFiles.has(index)) {
+                    const dateInput = document.querySelector(`input[data-file-index="${index}"]`);
+                    if (dateInput) {
+                        const date = dateInput.value;
+                        const key = keyInput.value.trim().toUpperCase() || 'DEFAULT';
+                        
+                        if (!dateKeyGroups[date]) {
+                            dateKeyGroups[date] = {};
+                        }
+                        if (!dateKeyGroups[date][key]) {
+                            dateKeyGroups[date][key] = [];
+                        }
+                        dateKeyGroups[date][key].push({ keyInput, index });
+                    }
+                }
+            });
+            
+            // Reset styling
+            keyInputs.forEach(input => {
+                input.classList.remove('border-red-500', 'bg-red-50');
+                input.classList.add('border-gray-300');
+            });
+            
+            // Highlight duplicate keys on same date
+            Object.keys(dateKeyGroups).forEach(date => {
+                Object.keys(dateKeyGroups[date]).forEach(key => {
+                    const files = dateKeyGroups[date][key];
+                    if (files.length > 1) {
+                        files.forEach(({ keyInput }) => {
+                            keyInput.classList.remove('border-gray-300');
+                            keyInput.classList.add('border-red-500', 'bg-red-50');
+                        });
+                        
+                        showKeyDuplicateWarning(date, key, files.length);
+                    }
+                });
+            });
+        }
+        
+        // Show key duplicate warning
+        function showKeyDuplicateWarning(date, key, count) {
+            // Remove existing key warning
+            const existingWarning = document.getElementById('keyDuplicateWarning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+            
+            // Create warning
+            const warning = document.createElement('div');
+            warning.id = 'keyDuplicateWarning';
+            warning.className = 'mt-4 p-3 bg-orange-100 border border-orange-300 rounded-lg';
+            warning.innerHTML = `
+                <div class="flex items-center">
+                    <span class="text-orange-600 mr-2">⚠️</span>
+                    <div>
+                        <p class="text-sm font-medium text-orange-800">Duplicate Key Detected</p>
+                        <p class="text-xs text-orange-700">${count} files have the same key "${key}" on date ${date}. Only one file per key per date is allowed.</p>
+                    </div>
+                </div>
+            `;
+            
+            // Insert after date verification list
+            const dateVerificationList = document.getElementById('dateVerificationList');
+            if (dateVerificationList) {
+                dateVerificationList.parentNode.insertBefore(warning, dateVerificationList.nextSibling);
+            }
+        }
+
+        // Process files with verified dates
+        async function processFilesWithVerifiedDates() {
+            try {
+                // Get verified dates from the form
+                const dateInputs = document.querySelectorAll('#dateVerificationList input[type="date"]');
+                const fileDataWithDates = [];
+                let tradeExecutionData = [];
+                
+                // Process portfolio files with verified dates (skip rejected files)
+                if (window.pendingFileData) {
+                    for (let i = 0; i < window.pendingFileData.length; i++) {
+                        // Skip rejected files
+                        if (window.rejectedFiles && window.rejectedFiles.has(i)) {
+                            console.log(`Skipping rejected file: ${window.pendingFileData[i].file.name}`);
+                            continue;
+                        }
+                        
+                        const pendingData = window.pendingFileData[i];
+                        const dateInput = document.querySelector(`input[data-file-index="${i}"]`);
+                        
+                        if (dateInput) {
+                            const verifiedDate = new Date(dateInput.value);
+                            const keyInput = document.querySelector(`input[data-file-index="${i}"][placeholder="Key"]`);
+                            const portfolioKey = keyInput ? keyInput.value.trim().toUpperCase() || 'DEFAULT' : 'DEFAULT';
+                            
+                            // Process the file data
+                            let newData = [];
+                            if (pendingData.fileData.type === 'csv') {
+                                newData = parseCSV(pendingData.fileData.data);
+                            } else if (pendingData.fileData.type === 'excel') {
+                                newData = parseExcel(pendingData.fileData.data);
+                            }
+                            
+                            // Add verified date and key to each item
+                            newData.forEach(item => {
+                                item.portfolioDate = verifiedDate.toISOString().split('T')[0];
+                                item.portfolioKey = portfolioKey;
+                                item.sourceFile = pendingData.file.name;
+                            });
+                            
+                            fileDataWithDates.push({
+                                data: newData,
+                                file: pendingData.file,
+                                date: verifiedDate.toISOString().split('T')[0],
+                                key: portfolioKey
+                            });
+                        }
+                    }
+                }
+                
+                // Process trade execution file with verified date
+                if (window.pendingTradeExecutionFile) {
+                    const tradeDateInput = document.querySelector('input[data-trade-file="true"]');
+                    if (tradeDateInput) {
+                        const verifiedTradeDate = new Date(tradeDateInput.value);
+                        tradeExecutionData = parseTradeExecutionSummary(
+                            window.pendingTradeExecutionFile.fileData.data,
+                            verifiedTradeDate
+                        );
+                    }
+                }
+                
+                // Group files by date and key, create both individual and combined portfolios
+                const portfoliosByDateAndKey = {};
+                const individualPortfolios = [];
+                
+                fileDataWithDates.forEach(fileData => {
+                    const dateKey = fileData.date;
+                    const portfolioKey = fileData.key || 'DEFAULT';
+                    
+                    // Create individual portfolio for this key
+                    const individualPortfolio = {
+                        name: `Portfolio_${dateKey}_${portfolioKey}`,
+                        date: dateKey,
+                        key: portfolioKey,
+                        holdings: fileData.data,
+                        sourceFile: fileData.file.name,
+                        totalValue: fileData.data.reduce((sum, item) => sum + (item.marketValue || 0), 0),
+                        totalCost: fileData.data.reduce((sum, item) => sum + (item.totalCost || 0), 0),
+                        totalPnL: fileData.data.reduce((sum, item) => sum + (item.unrealizedPnL || 0), 0)
+                    };
+                    individualPortfolios.push(individualPortfolio);
+                    
+                    // Group by date for combined portfolios
+                    if (!portfoliosByDateAndKey[dateKey]) {
+                        portfoliosByDateAndKey[dateKey] = {
+                            date: dateKey,
+                            holdings: [],
+                            sourceFiles: [],
+                            keys: []
+                        };
+                    }
+                    
+                    portfoliosByDateAndKey[dateKey].holdings.push(...fileData.data);
+                    portfoliosByDateAndKey[dateKey].sourceFiles.push(fileData.file.name);
+                    portfoliosByDateAndKey[dateKey].keys.push(portfolioKey);
+                });
+                
+                // Create combined portfolios for each date
+                const combinedPortfolios = [];
+                Object.keys(portfoliosByDateAndKey).sort().forEach(dateKey => {
+                    const portfolioGroup = portfoliosByDateAndKey[dateKey];
+                    
+                    if (portfolioGroup.holdings.length > 0) {
+                        // Combine holdings for this date using the existing combinePortfolios function
+                        const combinedHoldings = combinePortfolios(portfolioGroup.holdings);
+                        
+                        // Create combined portfolio object
+                        const combinedPortfolio = {
+                            name: `Portfolio_${dateKey}_COMBINED`,
+                            date: dateKey,
+                            key: 'COMBINED',
+                            holdings: combinedHoldings,
+                            sourceFiles: portfolioGroup.sourceFiles,
+                            keys: [...new Set(portfolioGroup.keys)], // Unique keys
+                            totalValue: combinedHoldings.reduce((sum, item) => sum + (item.marketValue || 0), 0),
+                            totalCost: combinedHoldings.reduce((sum, item) => sum + (item.totalCost || 0), 0),
+                            totalPnL: combinedHoldings.reduce((sum, item) => sum + (item.unrealizedPnL || 0), 0)
+                        };
+                        
+                        combinedPortfolios.push(combinedPortfolio);
+                    }
+                });
+                
+                // Store both individual and combined portfolios
+                allUploadedData = combinedPortfolios.flatMap(portfolio => portfolio.holdings);
+                window.individualPortfolios = individualPortfolios;
+                window.combinedPortfolios = combinedPortfolios;
+                
+                // Set portfolioData for table view and dashboard (use combined data)
+                portfolioData = allUploadedData;
+                
+                // Save portfolio data to localStorage for calculator access
+                try {
+                    localStorage.setItem('combinedPortfolios', JSON.stringify(combinedPortfolios));
+                    localStorage.setItem('allUploadedData', JSON.stringify(allUploadedData));
+                    localStorage.setItem('portfolioData', JSON.stringify(portfolioData));
+                    console.log('Portfolio data saved to localStorage for calculator access');
+                } catch (error) {
+                    console.log('Error saving portfolio data to localStorage:', error);
+                }
+                
+                // Apply sector mapping
+                sectorMapping = {...defaultSectorMapping};
+                portfolioData.forEach(item => {
+                    item.sector = sectorMapping[item.security] || 'Unknown';
+                });
+                
+                // Process the data (same as original upload logic)
+                if (allUploadedData.length > 0) {
+                    try {
+                        // Portfolio data is already set above, no need to reassign
+                        
+                        // Store trade execution data for trading journal
+                        if (tradeExecutionData.length > 0) {
+                            window.tradeExecutionData = tradeExecutionData;
+                        }
+                        
+                        // Save portfolios to database
+                        try {
+                            console.log('Saving portfolios to database...', {
+                                individual: individualPortfolios.length,
+                                combined: combinedPortfolios.length
+                            });
+                            
+                            // Save individual portfolios
+                            for (const portfolio of individualPortfolios) {
+                                const portfolioObj = new Portfolio(
+                                    portfolio.name,
+                                    portfolio.date,
+                                    `Portfolio for ${portfolio.key} on ${portfolio.date}`,
+                                    portfolio.holdings,
+                                    { key: portfolio.key, sourceFile: portfolio.sourceFile },
+                                    0
+                                );
+                                console.log('Saving individual portfolio:', portfolioObj.name);
+                                await savePortfolioToDB(portfolioObj);
+                            }
+                            
+                            // Save combined portfolios
+                            for (const portfolio of combinedPortfolios) {
+                                const portfolioObj = new Portfolio(
+                                    portfolio.name,
+                                    portfolio.date,
+                                    `Combined portfolio for ${portfolio.date} (${portfolio.keys.join(', ')})`,
+                                    portfolio.holdings,
+                                    { 
+                                        key: 'COMBINED', 
+                                        sourceFiles: portfolio.sourceFiles,
+                                        keys: portfolio.keys 
+                                    },
+                                    0
+                                );
+                                console.log('Saving combined portfolio:', portfolioObj.name);
+                                await savePortfolioToDB(portfolioObj);
+                            }
+                            
+                            console.log('All portfolios saved successfully');
+                            
+                            // Don't show portfolio list, stay on dashboard
+                            // loadPortfolioList();
+                            
+                        } catch (error) {
+                            console.error('Error saving portfolios to database:', error);
+                            alert('Error saving portfolios: ' + error.message);
+                        }
+                        
+                        // Show success message with rejection summary
+                        const rejectedCount = window.rejectedFiles ? window.rejectedFiles.size : 0;
+                        const acceptedCount = fileDataWithDates.length;
+                        let message = `Successfully processed ${acceptedCount} portfolio files`;
+                        if (rejectedCount > 0) {
+                            message += ` (${rejectedCount} files rejected)`;
+                        }
+                        if (tradeExecutionData.length > 0) {
+                            message += ` and ${tradeExecutionData.length} trade transactions`;
+                        }
+                        message += '!';
+                        alert(message);
+                        
+                        // Hide verification section
+                        const dateVerificationSection = document.getElementById('dateVerificationSection');
+                        if (dateVerificationSection) {
+                            dateVerificationSection.classList.add('hidden');
+                        }
+                        
+                        // Close upload modal and show dashboard
+                        document.getElementById('uploadModal').classList.add('hidden');
+                        document.getElementById('dashboardContent').classList.remove('hidden');
+                        document.getElementById('portfolioManagementSection').classList.add('hidden');
+                        
+                        // Refresh dashboard
+                        calculateSummary();
+                        createAllocationChart();
+                        createPerformanceChart();
+                        createSectorChart();
+                        createSectorPerformanceChart();
+                        createDiversificationChart(portfolioData);
+                        populateTable();
+                        populateTradingJournal();
+                        
+                    } catch (error) {
+                        console.error('Error processing verified data:', error);
+                        alert('Error processing files: ' + error.message);
+                    }
+                } else {
+                    alert('No valid data found in any of the selected portfolio files');
+                }
+                
+            } catch (error) {
+                console.error('Error processing files with verified dates:', error);
+                alert('Error processing files: ' + error.message);
+            }
+        }
+
         // File upload handling
         document.addEventListener('DOMContentLoaded', function() {
             try {
+                const previewBtn = document.getElementById('previewBtn');
                 const uploadBtn = document.getElementById('uploadBtn');
+                const confirmDatesBtn = document.getElementById('confirmDatesBtn');
+                const cancelDatesBtn = document.getElementById('cancelDatesBtn');
+                const rejectDuplicatesBtn = document.getElementById('rejectDuplicatesBtn');
+                
+                if (previewBtn) {
+                    previewBtn.addEventListener('click', function() {
+                        const fileInput = document.getElementById('csvFile');
+                        const tradeExecutionInput = document.getElementById('tradeExecutionFile');
+                        const files = fileInput.files;
+                        const tradeExecutionFile = tradeExecutionInput.files[0];
+                        
+                        if (!files || files.length === 0) {
+                            alert('Please select one or more portfolio files first');
+                            return;
+                        }
+                        
+                        // Store the files before clearing the input
+                        const filesToProcess = Array.from(files);
+                        
+                        // Extract dates and show verification
+                        showDateVerification(filesToProcess, tradeExecutionFile);
+                    });
+                }
+                
+                if (confirmDatesBtn) {
+                    confirmDatesBtn.addEventListener('click', function() {
+                        processFilesWithVerifiedDates();
+                    });
+                }
+                
+                if (rejectDuplicatesBtn) {
+                    rejectDuplicatesBtn.addEventListener('click', function() {
+                        // Find all duplicate dates and reject all but the first file for each date
+                        const dateInputs = document.querySelectorAll('input[type="date"]:not([data-trade-file="true"])');
+                        const dateGroups = {};
+                        
+                        // Group files by date
+                        dateInputs.forEach((input, index) => {
+                            if (!window.rejectedFiles.has(index)) {
+                                const date = input.value;
+                                if (!dateGroups[date]) {
+                                    dateGroups[date] = [];
+                                }
+                                dateGroups[date].push({ input, index });
+                            }
+                        });
+                        
+                        // Reject all but the first file for each duplicate date
+                        Object.keys(dateGroups).forEach(date => {
+                            const files = dateGroups[date];
+                            if (files.length > 1) {
+                                // Keep the first file, reject the rest
+                                for (let i = 1; i < files.length; i++) {
+                                    const { index } = files[i];
+                                    const rejectBtn = document.querySelector(`button[data-file-index="${index}"]`);
+                                    if (rejectBtn) {
+                                        rejectBtn.click(); // Trigger the reject action
+                                    }
+                                }
+                            }
+                        });
+                        
+                        // Show confirmation
+                        const duplicateCount = Object.values(dateGroups).reduce((sum, files) => sum + Math.max(0, files.length - 1), 0);
+                        if (duplicateCount > 0) {
+                            alert(`Rejected ${duplicateCount} duplicate files. Only the first file for each date was kept.`);
+                        } else {
+                            alert('No duplicates found to reject.');
+                        }
+                    });
+                }
+                
+                if (cancelDatesBtn) {
+                    cancelDatesBtn.addEventListener('click', function() {
+                        // Hide verification section and show preview button
+                        const dateVerificationSection = document.getElementById('dateVerificationSection');
+                        const previewBtn = document.getElementById('previewBtn');
+                        const uploadBtn = document.getElementById('uploadBtn');
+                        
+                        if (dateVerificationSection) {
+                            dateVerificationSection.classList.add('hidden');
+                        }
+                        if (previewBtn) {
+                            previewBtn.classList.remove('hidden');
+                        }
+                        if (uploadBtn) {
+                            uploadBtn.classList.add('hidden');
+                        }
+                    });
+                }
+                
                 if (uploadBtn) {
                     uploadBtn.addEventListener('click', function() {
-                    const fileInput = document.getElementById('csvFile');
-                    const files = fileInput.files;
-                    
-                    if (!files || files.length === 0) {
-                        alert('Please select one or more CSV files first');
-                        return;
-                    }
-                    
-                    // Store the files before clearing the input
-                    const filesToProcess = Array.from(files);
-                    
-                    
-                    // Automatically clear any existing data first to prevent partial data issues
-                    allUploadedData = [];
-                    portfolioData = [];
+                        // This is now handled by the old upload logic for backward compatibility
+                        const fileInput = document.getElementById('csvFile');
+                        const tradeExecutionInput = document.getElementById('tradeExecutionFile');
+                        const files = fileInput.files;
+                        const tradeExecutionFile = tradeExecutionInput.files[0];
+                        
+                        if (!files || files.length === 0) {
+                            alert('Please select one or more portfolio files first');
+                            return;
+                        }
+                        
+                        // Automatically clear any existing data first to prevent partial data issues
+                        allUploadedData = [];
+                        portfolioData = [];
                     sectorMapping = {};
                     
                     
@@ -3003,6 +4112,8 @@
                     let totalSecurities = 0;
                     
                     const processFiles = async (fileList) => {
+                        const fileDataWithDates = [];
+                        
                         for (let i = 0; i < fileList.length; i++) {
                             const file = fileList[i];
                             
@@ -3015,40 +4126,86 @@
                                     newData = parseCSV(fileData.data);
                                 } else if (fileData.type === 'excel') {
                                     newData = parseExcel(fileData.data);
+                                    
+                                    // Extract creation date from Excel file
+                                    const fileCreationDate = extractFileCreationDate(file, fileData.data);
+                                    console.log(`File ${file.name} creation date:`, fileCreationDate.toISOString().split('T')[0]);
+                                    
+                                    // Add portfolio date to each item
+                                    newData.forEach(item => {
+                                        item.portfolioDate = fileCreationDate.toISOString().split('T')[0];
+                                        item.sourceFile = file.name;
+                                    });
                                 }
                                 
-                                
                                 if (newData && newData.length > 0) {
-                                    // Check for duplicates before adding
-                                    const existingSecurities = new Set(allUploadedData.map(item => item.security));
-                                    const newSecurities = newData.map(item => item.security);
-                                    const duplicateSecurities = newSecurities.filter(security => existingSecurities.has(security));
+                                    fileDataWithDates.push({
+                                        data: newData,
+                                        file: file,
+                                        date: newData[0]?.portfolioDate || new Date().toISOString().split('T')[0]
+                                    });
                                     
-                                    if (duplicateSecurities.length > 0) {
-                                    }
-                                    
-                                    allUploadedData.push(...newData);
                                     totalSecurities += newData.length;
                                     processedFiles++;
                                 } else {
                                 }
                             } catch (error) {
+                                console.error(`Error processing file ${file.name}:`, error);
                             }
                         }
+                        
+                        // Create individual portfolios for each file
+                        const individualPortfolios = [];
+                        fileDataWithDates.forEach(fileData => {
+                            const portfolio = {
+                                name: `Portfolio_${fileData.date}`,
+                                date: fileData.date,
+                                holdings: fileData.data,
+                                totalValue: fileData.data.reduce((sum, item) => sum + (item.marketValue || 0), 0),
+                                totalCost: fileData.data.reduce((sum, item) => sum + (item.totalCost || 0), 0),
+                                totalPnL: fileData.data.reduce((sum, item) => sum + (item.unrealizedPnL || 0), 0),
+                                sourceFile: fileData.file.name
+                            };
+                            individualPortfolios.push(portfolio);
+                        });
+                        
+                        // Process trade execution summary if provided
+                        let tradeExecutionData = [];
+                        if (tradeExecutionFile) {
+                            try {
+                                const tradeFileData = await readFileAsync(tradeExecutionFile);
+                                if (tradeFileData.type === 'excel') {
+                                    tradeExecutionData = parseTradeExecutionSummary(tradeFileData.data);
+                                    console.log('Trade execution data processed:', tradeExecutionData.length, 'transactions');
+                                }
+                            } catch (error) {
+                                console.error('Error processing trade execution summary:', error);
+                                alert('Error processing trade execution summary: ' + error.message);
+                            }
+                        }
+                        
+                        // Store individual portfolios
+                        allUploadedData = fileDataWithDates.flatMap(f => f.data);
+                        window.individualPortfolios = individualPortfolios;
+                        
+                        // Set portfolioData for table view and dashboard
+                        portfolioData = allUploadedData;
+                        
+                        // Apply sector mapping
+                        sectorMapping = {...defaultSectorMapping};
+                        portfolioData.forEach(item => {
+                            item.sector = sectorMapping[item.security] || 'Unknown';
+                        });
                         
                         // All files processed, now combine and display
                         if (allUploadedData.length > 0) {
                             try {
-                                // Combine portfolios and aggregate by security
-                                portfolioData = combinePortfolios(allUploadedData);
+                                // Portfolio data is already set above, no need to reassign
                                 
-                                // Use default sector mapping
-                                sectorMapping = {...defaultSectorMapping};
-                                
-                                // Add sectors to portfolio data
-                                portfolioData.forEach(item => {
-                                    item.sector = sectorMapping[item.security] || 'Unknown';
-                                });
+                                // Store trade execution data for trading journal
+                                if (tradeExecutionData.length > 0) {
+                                    window.tradeExecutionData = tradeExecutionData;
+                                }
                                 
                                 if (comparisonMode) {
                                     // Handle comparison mode
@@ -3080,9 +4237,10 @@
                                             // Show comparison elements
                                             document.getElementById('comparisonCards').classList.remove('hidden');
                                             document.getElementById('comparisonTable').classList.remove('hidden');
+                                            document.getElementById('newComparisonTable').classList.remove('hidden');
                                             
                                             // Calculate and display comparison data
-                                            calculateComparisonData(initialPortfolio, currentPortfolio);
+                                            populateNewComparisonTable(initialPortfolio, currentPortfolio);
                                             
                                             // Refresh dashboard with comparison
                                             refreshDashboard();
@@ -3215,6 +4373,7 @@
         }
 
         // Combine portfolios and aggregate by security
+        // Note: avgPrice from uploaded portfolios already includes 1.12% brokerage fees
         function combinePortfolios(allData) {
             if (!Array.isArray(allData)) {
                 return [];
@@ -3237,17 +4396,23 @@
                 if (combined[item.security]) {
                     // Aggregate existing security
                     const oldQuantity = combined[item.security].quantity;
+                    const oldAvgPrice = combined[item.security].avgPrice;
                     const oldTotalCost = combined[item.security].totalCost;
                     const oldMarketValue = combined[item.security].marketValue;
                     const oldUnrealizedPnL = combined[item.security].unrealizedPnL;
                     
-                    combined[item.security].quantity += item.quantity;
+                    // Calculate weighted average price: sum(quantity * avgPrice) / total quantity
+                    // Since avgPrice from uploaded portfolios already includes 1.12% brokerage fees,
+                    // we can directly use the weighted average formula without additional fee calculations
+                    const totalQuantity = oldQuantity + item.quantity;
+                    const weightedAvgPrice = ((oldQuantity * oldAvgPrice) + (item.quantity * item.avgPrice)) / totalQuantity;
+                    
+                    combined[item.security].quantity = totalQuantity;
+                    combined[item.security].avgPrice = weightedAvgPrice;
                     combined[item.security].totalCost += item.totalCost;
                     combined[item.security].marketValue += item.marketValue;
                     combined[item.security].unrealizedPnL += item.unrealizedPnL;
                     
-                    // Recalculate average price
-                    combined[item.security].avgPrice = combined[item.security].totalCost / combined[item.security].quantity;
                     // Recalculate return percentage
                     combined[item.security].returnPercent = (combined[item.security].unrealizedPnL / combined[item.security].totalCost) * 100;
                     
@@ -3373,6 +4538,218 @@
                 
                 return data;
             } catch (error) {
+                return [];
+            }
+        }
+
+        // Extract file creation date from various sources
+        function extractFileCreationDate(file, workbook) {
+            try {
+                // Method 1: Try to extract from workbook properties
+                if (workbook && workbook.Props) {
+                    if (workbook.Props.CreatedDate) {
+                        return new Date(workbook.Props.CreatedDate);
+                    }
+                    if (workbook.Props.ModifiedDate) {
+                        return new Date(workbook.Props.ModifiedDate);
+                    }
+                }
+                
+                // Method 2: Try to extract from filename (common patterns)
+                if (file && file.name) {
+                    const filename = file.name;
+                    
+                    // Pattern 1: YYYY-MM-DD format
+                    const datePattern1 = /(\d{4})-(\d{2})-(\d{2})/;
+                    const match1 = filename.match(datePattern1);
+                    if (match1) {
+                        return new Date(match1[1], match1[2] - 1, match1[3]);
+                    }
+                    
+                    // Pattern 2: YYYYMMDD format
+                    const datePattern2 = /(\d{4})(\d{2})(\d{2})/;
+                    const match2 = filename.match(datePattern2);
+                    if (match2) {
+                        return new Date(match2[1], match2[2] - 1, match2[3]);
+                    }
+                    
+                    // Pattern 3: DD-MM-YYYY format
+                    const datePattern3 = /(\d{2})-(\d{2})-(\d{4})/;
+                    const match3 = filename.match(datePattern3);
+                    if (match3) {
+                        return new Date(match3[3], match3[2] - 1, match3[1]);
+                    }
+                }
+                
+                // Method 3: Use file last modified date as fallback
+                if (file && file.lastModified) {
+                    return new Date(file.lastModified);
+                }
+                
+                // Method 4: Use current date as final fallback
+                return new Date();
+                
+            } catch (error) {
+                console.error('Error extracting file creation date:', error);
+                return new Date();
+            }
+        }
+
+        // Group portfolios by creation date and create combined portfolios
+        function groupPortfoliosByDate(portfolioData, tradeExecutionData = []) {
+            try {
+                // Group portfolio data by date
+                const portfoliosByDate = {};
+                
+                portfolioData.forEach(item => {
+                    const dateKey = item.portfolioDate || new Date().toISOString().split('T')[0];
+                    
+                    if (!portfoliosByDate[dateKey]) {
+                        portfoliosByDate[dateKey] = {
+                            date: dateKey,
+                            holdings: [],
+                            tradeExecutions: []
+                        };
+                    }
+                    
+                    portfoliosByDate[dateKey].holdings.push(item);
+                });
+                
+                // Group trade execution data by date
+                tradeExecutionData.forEach(transaction => {
+                    const dateKey = transaction.transactionDate || new Date().toISOString().split('T')[0];
+                    
+                    if (!portfoliosByDate[dateKey]) {
+                        portfoliosByDate[dateKey] = {
+                            date: dateKey,
+                            holdings: [],
+                            tradeExecutions: []
+                        };
+                    }
+                    
+                    portfoliosByDate[dateKey].tradeExecutions.push(transaction);
+                });
+                
+                // Create combined portfolios for each date
+                const combinedPortfolios = [];
+                
+                Object.keys(portfoliosByDate).sort().forEach(dateKey => {
+                    const portfolioGroup = portfoliosByDate[dateKey];
+                    
+                    if (portfolioGroup.holdings.length > 0) {
+                        // Combine holdings for this date
+                        const combinedHoldings = combinePortfolios(portfolioGroup.holdings);
+                        
+                        // Create portfolio object
+                        const combinedPortfolio = {
+                            name: `Portfolio_${dateKey}`,
+                            date: dateKey,
+                            holdings: combinedHoldings,
+                            tradeExecutions: portfolioGroup.tradeExecutions,
+                            totalValue: combinedHoldings.reduce((sum, item) => sum + (item.marketValue || 0), 0),
+                            totalCost: combinedHoldings.reduce((sum, item) => sum + (item.totalCost || 0), 0),
+                            totalPnL: combinedHoldings.reduce((sum, item) => sum + (item.unrealizedPnL || 0), 0)
+                        };
+                        
+                        combinedPortfolios.push(combinedPortfolio);
+                    }
+                });
+                
+                return combinedPortfolios;
+                
+            } catch (error) {
+                console.error('Error grouping portfolios by date:', error);
+                return [];
+            }
+        }
+
+        // Trade Execution Summary Parser
+        function parseTradeExecutionSummary(workbook) {
+            try {
+                const transactions = [];
+                
+                // Only process the first sheet
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                // Parse the worksheet
+                let jsonData = [];
+                try {
+                    jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                } catch (e) {
+                    try {
+                        jsonData = XLSX.utils.sheet_to_json(worksheet);
+                    } catch (e2) {
+                        jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, header: 1 });
+                    }
+                }
+                
+                if (jsonData.length === 0) return transactions;
+                
+                // Find the header row
+                let headerRowIndex = 0;
+                for (let i = 0; i < Math.min(10, jsonData.length); i++) {
+                    const row = jsonData[i];
+                    if (row && row.some(cell => cell && cell.toString().includes('Security'))) {
+                        headerRowIndex = i;
+                        break;
+                    }
+                }
+                
+                const headers = jsonData[headerRowIndex] || [];
+                
+                // Process data rows
+                for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+                    const row = jsonData[i];
+                    if (!row || row.length === 0) continue;
+                    
+                    const item = {};
+                    headers.forEach((header, index) => {
+                        if (header && row[index] !== undefined) {
+                            item[header] = row[index];
+                        }
+                    });
+                    
+                    // Map trade execution summary columns
+                    const security = item['Security'] || '';
+                    const side = item['Side'] || '';
+                    const avgPrice = safeParseNumber(item['Avg Price'] || 0);
+                    const executedQuantity = safeParseNumber(item['Executed Quantity'] || 0);
+                    const grossAmount = safeParseNumber(item['Gross Amount'] || 0);
+                    const tradeId = item['Trade Id'] || '';
+                    const clientAccount = item['Client A/C'] || '';
+                    const noOfTrades = safeParseNumber(item['No Of Trades'] || 1);
+                    
+                    // Only process valid transactions
+                    if (security && side && avgPrice > 0 && executedQuantity > 0) {
+                        // Calculate brokerage fees (1.12%)
+                        const brokerageFees = grossAmount * 0.0112;
+                        const netAmount = side === 'BUY' ? grossAmount + brokerageFees : grossAmount - brokerageFees;
+                        
+                        const transaction = {
+                            id: generateTradeId(),
+                            security: security,
+                            side: side,
+                            quantity: executedQuantity,
+                            price: avgPrice,
+                            grossAmount: grossAmount,
+                            fees: brokerageFees,
+                            netAmount: netAmount,
+                            tradeId: tradeId,
+                            clientAccount: clientAccount,
+                            noOfTrades: noOfTrades,
+                            transactionDate: new Date().toISOString().split('T')[0], // Use current date or extract from file
+                            type: side, // BUY or SELL
+                            isCompleted: side === 'SELL' // SELL transactions are completed
+                        };
+                        
+                        transactions.push(transaction);
+                    }
+                }
+                
+                return transactions;
+            } catch (error) {
+                console.error('Error parsing trade execution summary:', error);
                 return [];
             }
         }
@@ -3583,6 +4960,8 @@
         // Calculate comparison data between two portfolios
         function calculateComparisonData(initial, current) {
             try {
+                console.log('calculateComparisonData called with:', { initial: initial.length, current: current.length });
+                
                 // Create maps for easy lookup
                 const initialMap = new Map();
                 const currentMap = new Map();
@@ -3650,6 +5029,14 @@
                     performanceRating = 'Very Bad';
                 }
                 
+                // Update portfolio dates
+                const initialDate = getPortfolioDateFromData(initial);
+                const currentDate = getPortfolioDateFromData(current);
+                document.getElementById('initialPortfolioDate').textContent = initialDate;
+                document.getElementById('currentPortfolioDate').textContent = currentDate;
+                document.getElementById('comparisonInitialDate').textContent = initialDate;
+                document.getElementById('comparisonCurrentDate').textContent = currentDate;
+                
                 // Update comparison cards
                 document.getElementById('valueChange').textContent = 'Rs. ' + formatNumber(valueChange);
                 document.getElementById('valueChangePercent').textContent = formatNumber(valueChangePercent, 2) + '%';
@@ -3698,11 +5085,15 @@
             }
         }
 
-        // Populate comparison table
-        function populateComparisonTable(initial, current) {
+        // Populate new comparison table
+        function populateNewComparisonTable(initial, current) {
             try {
-                const tableBody = document.getElementById('comparisonTableBody');
-                if (!tableBody) return;
+                console.log('populateNewComparisonTable called with:', { initial: initial.length, current: current.length });
+                const tableBody = document.getElementById('newComparisonTableBody');
+                if (!tableBody) {
+                    console.error('newComparisonTableBody not found!');
+                    return;
+                }
                 
                 // Clear existing content
                 tableBody.innerHTML = '';
@@ -3716,6 +5107,143 @@
                 
                 // Get all unique securities
                 const allSecurities = new Set([...initial.map(item => item.security), ...current.map(item => item.security)]);
+                console.log('All securities for new table:', allSecurities.size);
+                
+                const comparisonData = [];
+                let addedCount = 0, modifiedCount = 0, removedCount = 0, unchangedCount = 0;
+                
+                allSecurities.forEach(security => {
+                    const initialItem = initialMap.get(security);
+                    const currentItem = currentMap.get(security);
+                    
+                    let status = 'Unchanged';
+                    let quantityChange = 0;
+                    let marketValueChange = 0;
+                    let pnlChange = 0;
+                    let returnChange = 0;
+                    let sector = 'Unknown';
+                    
+                    if (initialItem && currentItem) {
+                        // Security exists in both portfolios
+                        quantityChange = (currentItem.quantity || 0) - (initialItem.quantity || 0);
+                        marketValueChange = (currentItem.marketValue || 0) - (initialItem.marketValue || 0);
+                        pnlChange = (currentItem.unrealizedPnL || 0) - (initialItem.unrealizedPnL || 0);
+                        returnChange = (currentItem.returnPercent || 0) - (initialItem.returnPercent || 0);
+                        sector = currentItem.sector || 'Unknown';
+                        
+                        // Determine if this should be marked as removed (sold completely)
+                        if (currentItem.quantity <= 0) {
+                            status = 'Removed';
+                            removedCount++;
+                        } else if (quantityChange !== 0 || marketValueChange !== 0 || pnlChange !== 0) {
+                            status = 'Modified';
+                            modifiedCount++;
+                        } else {
+                            status = 'Unchanged';
+                            unchangedCount++;
+                        }
+                    } else if (currentItem) {
+                        // Added security
+                        status = 'Added';
+                        quantityChange = currentItem.quantity || 0;
+                        marketValueChange = currentItem.marketValue || 0;
+                        pnlChange = currentItem.unrealizedPnL || 0;
+                        returnChange = currentItem.returnPercent || 0;
+                        sector = currentItem.sector || 'Unknown';
+                        addedCount++;
+                    } else if (initialItem) {
+                        // Removed security (not in current portfolio)
+                        status = 'Removed';
+                        quantityChange = -(initialItem.quantity || 0);
+                        marketValueChange = -(initialItem.marketValue || 0);
+                        pnlChange = -(initialItem.unrealizedPnL || 0);
+                        returnChange = -(initialItem.returnPercent || 0);
+                        sector = initialItem.sector || 'Unknown';
+                        removedCount++;
+                    }
+                    
+                    comparisonData.push({
+                        security,
+                        status,
+                        quantityChange,
+                        marketValueChange,
+                        pnlChange,
+                        returnChange,
+                        sector
+                    });
+                });
+                
+                // Sort by absolute market value change
+                comparisonData.sort((a, b) => Math.abs(b.marketValueChange) - Math.abs(a.marketValueChange));
+                
+                // Update summary counts
+                document.getElementById('addedCount').textContent = addedCount;
+                document.getElementById('modifiedCount').textContent = modifiedCount;
+                document.getElementById('removedCount').textContent = removedCount;
+                document.getElementById('unchangedCount').textContent = unchangedCount;
+                
+                // Create table rows
+                comparisonData.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b hover:bg-gray-50';
+                    
+                    // Determine status color
+                    let statusColor = 'text-gray-600';
+                    if (item.status === 'Added') statusColor = 'text-green-600';
+                    else if (item.status === 'Removed') statusColor = 'text-red-600';
+                    else if (item.status === 'Modified') statusColor = 'text-blue-600';
+                    
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-gray-900">${item.security}</td>
+                        <td class="px-4 py-3 text-center ${statusColor} font-semibold">${item.status}</td>
+                        <td class="px-4 py-3 text-right ${item.quantityChange >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${item.quantityChange >= 0 ? '+' : ''}${formatInteger(item.quantityChange)}
+                        </td>
+                        <td class="px-4 py-3 text-right ${item.marketValueChange >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${item.marketValueChange >= 0 ? '+' : ''}Rs. ${formatNumber(item.marketValueChange)}
+                        </td>
+                        <td class="px-4 py-3 text-right ${item.pnlChange >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${item.pnlChange >= 0 ? '+' : ''}Rs. ${formatNumber(item.pnlChange)}
+                        </td>
+                        <td class="px-4 py-3 text-right ${item.returnChange >= 0 ? 'text-green-600' : 'text-red-600'}">
+                            ${item.returnChange >= 0 ? '+' : ''}${formatNumber(item.returnChange, 2)}%
+                        </td>
+                        <td class="px-4 py-3 text-center text-gray-600">${item.sector}</td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                console.log('Added', comparisonData.length, 'rows to new comparison table');
+                
+            } catch (error) {
+                console.error('Error populating new comparison table:', error);
+            }
+        }
+
+        // Populate comparison table
+        function populateComparisonTable(initial, current) {
+            try {
+                console.log('populateComparisonTable called with:', { initial: initial.length, current: current.length });
+                const tableBody = document.getElementById('comparisonTableBody');
+                if (!tableBody) {
+                    console.error('comparisonTableBody not found!');
+                    return;
+                }
+                
+                // Clear existing content
+                tableBody.innerHTML = '';
+                
+                // Create maps for easy lookup
+                const initialMap = new Map();
+                const currentMap = new Map();
+                
+                initial.forEach(item => initialMap.set(item.security, item));
+                current.forEach(item => currentMap.set(item.security, item));
+                
+                // Get all unique securities
+                const allSecurities = new Set([...initial.map(item => item.security), ...current.map(item => item.security)]);
+                console.log('All securities:', allSecurities.size);
                 const comparisonData = [];
                 
                 allSecurities.forEach(security => {
@@ -3791,7 +5319,7 @@
                         <td class="px-4 py-2 font-medium">${item.security}</td>
                         <td class="px-4 py-2 text-center ${statusColor} font-semibold">${item.status}</td>
                         <td class="px-4 py-2 text-right ${item.quantityChange >= 0 ? 'text-green-600' : 'text-red-600'}" data-order="${item.quantityChange}">
-                            ${item.quantityChange >= 0 ? '+' : ''}${item.quantityChange.toLocaleString('en-US')}
+                            ${item.quantityChange >= 0 ? '+' : ''}${formatInteger(item.quantityChange)}
                         </td>
                         <td class="px-4 py-2 text-right ${item.marketValueChange >= 0 ? 'text-green-600' : 'text-red-600'}" data-order="${item.marketValueChange}">
                             ${item.marketValueChange >= 0 ? '+' : ''}Rs. ${formatNumber(item.marketValueChange)}
@@ -3807,6 +5335,21 @@
                     
                     tableBody.appendChild(row);
                 });
+                
+                console.log('Added', comparisonData.length, 'rows to comparison table');
+                
+                // Test if comparison table is actually visible
+                setTimeout(() => {
+                    const tableElement = document.getElementById('comparisonDataTable');
+                    const tableBody = document.getElementById('comparisonTableBody');
+                    console.log('Comparison table visibility test:', {
+                        tableExists: !!tableElement,
+                        tableBodyExists: !!tableBody,
+                        tableBodyChildren: tableBody ? tableBody.children.length : 0,
+                        tableVisible: tableElement ? !tableElement.closest('.hidden') : false,
+                        tableDisplay: tableElement ? window.getComputedStyle(tableElement).display : 'N/A'
+                    });
+                }, 100);
                 
                 // Add total portfolio value change row (including cash balance)
                 const currentCashBalance = parseFloat(document.getElementById('cashBalance').value) || 0;
@@ -3878,6 +5421,214 @@
             
             pnlElement.className = totalPnL >= 0 ? 'text-2xl font-bold text-success' : 'text-2xl font-bold text-danger';
             returnElement.className = totalReturn >= 0 ? 'text-2xl font-bold text-success' : 'text-2xl font-bold text-danger';
+            
+            // Update trade execution summary if available
+            updateTradeExecutionSummary();
+            
+            // Update individual portfolios display if available
+            updateIndividualPortfoliosDisplay();
+        }
+        
+        // Update trade execution summary metrics
+        function updateTradeExecutionSummary() {
+            if (!window.tradeExecutionData || window.tradeExecutionData.length === 0) {
+                return;
+            }
+            
+            try {
+                // Calculate trade statistics
+                const trades = window.tradeExecutionData;
+                const buyTrades = trades.filter(t => t.side === 'BUY');
+                const sellTrades = trades.filter(t => t.side === 'SELL');
+                
+                // Calculate total trade value
+                const totalBuyValue = buyTrades.reduce((sum, trade) => sum + trade.grossAmount, 0);
+                const totalSellValue = sellTrades.reduce((sum, trade) => sum + trade.grossAmount, 0);
+                const totalTradeValue = totalBuyValue + totalSellValue;
+                
+                // Calculate total fees
+                const totalFees = trades.reduce((sum, trade) => sum + trade.fees, 0);
+                
+                // Update trade execution summary display if elements exist
+                const tradeSummaryElement = document.getElementById('tradeExecutionSummary');
+                if (tradeSummaryElement) {
+                    tradeSummaryElement.innerHTML = `
+                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                            <h4 class="text-lg font-semibold text-orange-900 mb-3">Trade Execution Summary</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <p class="text-orange-700 font-medium">Total Trades</p>
+                                    <p class="text-xl font-bold text-orange-900">${trades.length}</p>
+                                </div>
+                                <div>
+                                    <p class="text-orange-700 font-medium">Buy Orders</p>
+                                    <p class="text-xl font-bold text-green-600">${buyTrades.length}</p>
+                                </div>
+                                <div>
+                                    <p class="text-orange-700 font-medium">Sell Orders</p>
+                                    <p class="text-xl font-bold text-red-600">${sellTrades.length}</p>
+                                </div>
+                                <div>
+                                    <p class="text-orange-700 font-medium">Total Fees</p>
+                                    <p class="text-xl font-bold text-orange-900">Rs. ${formatNumber(totalFees, 2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                console.log('Trade execution summary updated:', {
+                    totalTrades: trades.length,
+                    buyTrades: buyTrades.length,
+                    sellTrades: sellTrades.length,
+                    totalFees: totalFees
+                });
+                
+            } catch (error) {
+                console.error('Error updating trade execution summary:', error);
+            }
+        }
+        
+        // Update portfolios display (both individual and combined)
+        function updateIndividualPortfoliosDisplay() {
+            if ((!window.individualPortfolios || window.individualPortfolios.length === 0) && 
+                (!window.combinedPortfolios || window.combinedPortfolios.length === 0)) {
+                return;
+            }
+            
+            try {
+                const section = document.getElementById('groupedPortfoliosSection');
+                const list = document.getElementById('groupedPortfoliosList');
+                
+                if (!section || !list) {
+                    return;
+                }
+                
+                // Show the section
+                section.classList.remove('hidden');
+                
+                // Clear existing content
+                list.innerHTML = '';
+                
+                // Group portfolios by date
+                const portfoliosByDate = {};
+                
+                // Add individual portfolios
+                if (window.individualPortfolios) {
+                    window.individualPortfolios.forEach(portfolio => {
+                        const dateKey = portfolio.date;
+                        if (!portfoliosByDate[dateKey]) {
+                            portfoliosByDate[dateKey] = {
+                                date: dateKey,
+                                individual: [],
+                                combined: null
+                            };
+                        }
+                        portfoliosByDate[dateKey].individual.push(portfolio);
+                    });
+                }
+                
+                // Add combined portfolios
+                if (window.combinedPortfolios) {
+                    window.combinedPortfolios.forEach(portfolio => {
+                        const dateKey = portfolio.date;
+                        if (!portfoliosByDate[dateKey]) {
+                            portfoliosByDate[dateKey] = {
+                                date: dateKey,
+                                individual: [],
+                                combined: null
+                            };
+                        }
+                        portfoliosByDate[dateKey].combined = portfolio;
+                    });
+                }
+                
+                // Create display for each date
+                Object.keys(portfoliosByDate).sort().forEach(dateKey => {
+                    const dateGroup = portfoliosByDate[dateKey];
+                    
+                    // Create date header
+                    const dateHeader = document.createElement('div');
+                    dateHeader.className = 'col-span-full mb-4';
+                    dateHeader.innerHTML = `
+                        <h4 class="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2">
+                            📅 ${dateKey}
+                        </h4>
+                    `;
+                    list.appendChild(dateHeader);
+                    
+                    // Add combined portfolio first (if exists)
+                    if (dateGroup.combined) {
+                        const combinedCard = createPortfolioCard(dateGroup.combined, true);
+                        list.appendChild(combinedCard);
+                    }
+                    
+                    // Add individual portfolios
+                    dateGroup.individual.forEach(portfolio => {
+                        const individualCard = createPortfolioCard(portfolio, false);
+                        list.appendChild(individualCard);
+                    });
+                });
+                
+                console.log('Portfolios displayed:', {
+                    individual: window.individualPortfolios?.length || 0,
+                    combined: window.combinedPortfolios?.length || 0
+                });
+                
+            } catch (error) {
+                console.error('Error updating portfolios display:', error);
+            }
+        }
+        
+        // Create portfolio card
+        function createPortfolioCard(portfolio, isCombined) {
+            const card = document.createElement('div');
+            card.className = `bg-white rounded-lg border p-4 shadow-sm hover:shadow-md transition-shadow ${
+                isCombined ? 'border-blue-200 bg-blue-50' : 'border-gray-200'
+            }`;
+            
+            const pnlColor = portfolio.totalPnL >= 0 ? 'text-green-600' : 'text-red-600';
+            const returnPercent = portfolio.totalCost > 0 ? (portfolio.totalPnL / portfolio.totalCost) * 100 : 0;
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-semibold ${isCombined ? 'text-blue-900' : 'text-gray-900'}">
+                        ${portfolio.name}
+                        ${isCombined ? '🔗' : ''}
+                    </h4>
+                    <div class="text-right">
+                        <span class="text-sm text-gray-500">${portfolio.date}</span>
+                        ${portfolio.key ? `<div class="text-xs text-gray-400">Key: ${portfolio.key}</div>` : ''}
+                    </div>
+                </div>
+                ${portfolio.sourceFile ? `<div class="text-xs text-gray-500 mb-2">Source: ${portfolio.sourceFile}</div>` : ''}
+                ${portfolio.sourceFiles ? `<div class="text-xs text-gray-500 mb-2">Sources: ${portfolio.sourceFiles.join(', ')}</div>` : ''}
+                ${portfolio.keys && portfolio.keys.length > 1 ? `<div class="text-xs text-blue-600 mb-2">Keys: ${portfolio.keys.join(', ')}</div>` : ''}
+                <div class="space-y-1 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Value:</span>
+                        <span class="font-medium">Rs. ${formatNumber(portfolio.totalValue, 2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Total Cost:</span>
+                        <span class="font-medium">Rs. ${formatNumber(portfolio.totalCost, 2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">P&L:</span>
+                        <span class="font-medium ${pnlColor}">${portfolio.totalPnL >= 0 ? '+' : ''}Rs. ${formatNumber(portfolio.totalPnL, 2)}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Return:</span>
+                        <span class="font-medium ${pnlColor}">${returnPercent >= 0 ? '+' : ''}${returnPercent.toFixed(2)}%</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Holdings:</span>
+                        <span class="font-medium">${portfolio.holdings.length}</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
         }
 
         // Get current cash balance from form or current portfolio
@@ -3978,6 +5729,75 @@
             }
         }
 
+        // Get current portfolio date for chart display
+        function getCurrentPortfolioDate() {
+            // Check if we have individual or combined portfolios
+            if (window.individualPortfolios && window.individualPortfolios.length > 0) {
+                return window.individualPortfolios[0].date;
+            }
+            if (window.combinedPortfolios && window.combinedPortfolios.length > 0) {
+                return window.combinedPortfolios[0].date;
+            }
+            // Fallback to current date
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        // Get portfolio date from portfolio data (for comparison)
+        function getPortfolioDateFromData(portfolioData) {
+            // Check if portfolio data has date information
+            if (portfolioData && portfolioData.length > 0) {
+                // Check if first item has portfolioDate
+                if (portfolioData[0].portfolioDate) {
+                    return portfolioData[0].portfolioDate;
+                }
+                // Check if first item has date
+                if (portfolioData[0].date) {
+                    return portfolioData[0].date;
+                }
+            }
+            
+            // Check global portfolio variables
+            if (window.initialPortfolio && window.initialPortfolio.length > 0) {
+                if (window.initialPortfolio[0].portfolioDate) {
+                    return window.initialPortfolio[0].portfolioDate;
+                }
+            }
+            
+            if (window.individualPortfolios && window.individualPortfolios.length > 0) {
+                return window.individualPortfolios[0].date;
+            }
+            
+            if (window.combinedPortfolios && window.combinedPortfolios.length > 0) {
+                return window.combinedPortfolios[0].date;
+            }
+            
+            // Fallback to current date
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        // Extract date from portfolio name (format: Portfolio_YYYY-MM-DD_KEY)
+        function extractDateFromPortfolioName(portfolioName) {
+            try {
+                // Pattern: Portfolio_YYYY-MM-DD_KEY or Portfolio_YYYY-MM-DD
+                const match = portfolioName.match(/Portfolio_(\d{4}-\d{2}-\d{2})/);
+                if (match && match[1]) {
+                    return match[1]; // Returns YYYY-MM-DD format
+                }
+                
+                // Fallback: try to extract from any date pattern in the name
+                const dateMatch = portfolioName.match(/(\d{4}-\d{2}-\d{2})/);
+                if (dateMatch && dateMatch[1]) {
+                    return dateMatch[1];
+                }
+                
+                // If no date found, return current date
+                return new Date().toISOString().split('T')[0];
+            } catch (error) {
+                console.error('Error extracting date from portfolio name:', error);
+                return new Date().toISOString().split('T')[0];
+            }
+        }
+
         // Create performance chart
         function createPerformanceChart(dataToUse = portfolioData) {
             try {
@@ -3999,7 +5819,7 @@
                 
                 // Get cash balance and create combined data
                 const cashBalance = getCurrentCashBalance();
-                const combinedData = [...portfolioData];
+                const combinedData = [...dataToUse];
                 if (cashBalance > 0) {
                     combinedData.push({
                         security: 'Cash',
@@ -4012,6 +5832,8 @@
                 // Sort by absolute P&L
                 const sortedData = [...combinedData].sort((a, b) => Math.abs(b.unrealizedPnL || 0) - Math.abs(a.unrealizedPnL || 0));
                 const top15 = sortedData.slice(0, 15);
+                
+                const portfolioDate = getCurrentPortfolioDate();
                 
                 window.performanceChart = new Chart(ctx, {
                     type: 'bar',
@@ -4026,6 +5848,12 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: `Performance Chart - ${portfolioDate}`
+                            }
+                        },
                         scales: {
                             y: {
                                 beginAtZero: true,
@@ -4104,6 +5932,7 @@
                 
                 const labels = sortedSectors.map(([sector]) => sector);
                 const data = sortedSectors.map(([, value]) => value);
+                const portfolioDate = getCurrentPortfolioDate();
                 
                 window.sectorChart = new Chart(ctx, {
                     type: 'pie',
@@ -4121,6 +5950,10 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
+                            title: {
+                                display: true,
+                                text: `Sector Allocation - ${portfolioDate}`
+                            },
                             legend: {
                                 display: true,
                                 position: 'bottom',
@@ -4251,10 +6084,6 @@
         // Populate trading journal
         function populateTradingJournal() {
             try {
-                if (!portfolioData || portfolioData.length === 0) {
-                    return;
-                }
-                
                 const tableBody = document.getElementById('tradingJournalTableBody');
                 if (!tableBody) {
                     return;
@@ -4262,6 +6091,18 @@
                 
                 // Clear existing content
                 tableBody.innerHTML = '';
+                
+                // Check if we have trade execution data
+                if (window.tradeExecutionData && window.tradeExecutionData.length > 0) {
+                    // Use trade execution data for more accurate trading journal
+                    populateTradingJournalFromExecutions();
+                    return;
+                }
+                
+                // Fallback to portfolio data if no trade execution data
+                if (!portfolioData || portfolioData.length === 0) {
+                    return;
+                }
                 
                 // Create trading journal entries from portfolio data
                 portfolioData.forEach((item, index) => {
@@ -4296,7 +6137,7 @@
                     row.innerHTML = `
                         <td class="px-4 py-2 text-center text-xs border-r whitespace-nowrap">${new Date().toLocaleDateString()}</td>
                         <td class="px-4 py-2 text-left text-xs font-medium border-r">${item.security}</td>
-                        <td class="px-4 py-2 text-right text-xs border-r">${quantity.toLocaleString()}</td>
+                        <td class="px-4 py-2 text-right text-xs border-r">${formatInteger(quantity)}</td>
                         <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(avgPrice, 2)}</td>
                         <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(stopLoss, 2)}</td>
                         <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(takeProfit, 2)}</td>
@@ -4314,6 +6155,131 @@
                 
                 
             } catch (error) {
+            }
+        }
+
+        // Populate trading journal from trade execution data
+        function populateTradingJournalFromExecutions() {
+            try {
+                const tableBody = document.getElementById('tradingJournalTableBody');
+                if (!tableBody || !window.tradeExecutionData) {
+                    return;
+                }
+                
+                // Group transactions by security and process BUY/SELL pairs
+                const groupedTransactions = {};
+                window.tradeExecutionData.forEach(transaction => {
+                    const security = transaction.security;
+                    if (!groupedTransactions[security]) {
+                        groupedTransactions[security] = {
+                            buys: [],
+                            sells: []
+                        };
+                    }
+                    
+                    if (transaction.side === 'BUY') {
+                        groupedTransactions[security].buys.push(transaction);
+                    } else if (transaction.side === 'SELL') {
+                        groupedTransactions[security].sells.push(transaction);
+                    }
+                });
+                
+                // Process each security
+                Object.keys(groupedTransactions).forEach(security => {
+                    const { buys, sells } = groupedTransactions[security];
+                    
+                    // Process BUY transactions
+                    buys.forEach(buy => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                        
+                        // Calculate P&L if there are corresponding sells
+                        let pnl = 0;
+                        let pnlPercent = 0;
+                        let soldDate = '-';
+                        let soldPrice = '-';
+                        let sellOrderValue = '-';
+                        let duration = '-';
+                        
+                        // Find matching sell transaction (FIFO)
+                        const matchingSell = sells.find(sell => sell.quantity > 0);
+                        if (matchingSell) {
+                            soldDate = matchingSell.transactionDate;
+                            soldPrice = formatNumber(matchingSell.price, 2);
+                            sellOrderValue = formatNumber(matchingSell.grossAmount, 2);
+                            
+                            // Calculate P&L
+                            const buyValue = buy.quantity * buy.price;
+                            const sellValue = matchingSell.quantity * matchingSell.price;
+                            const buyFees = buy.fees;
+                            const sellFees = matchingSell.fees;
+                            
+                            pnl = (sellValue - sellFees) - (buyValue + buyFees);
+                            pnlPercent = buyValue > 0 ? (pnl / (buyValue + buyFees)) * 100 : 0;
+                            
+                            // Calculate duration
+                            const buyDate = new Date(buy.transactionDate);
+                            const sellDate = new Date(matchingSell.transactionDate);
+                            duration = Math.ceil((sellDate - buyDate) / (1000 * 60 * 60 * 24));
+                            
+                            // Mark sell as used
+                            matchingSell.quantity = 0;
+                        }
+                        
+                        // Calculate stop loss and take profit
+                        const stopLoss = buy.price * 0.95;
+                        const takeProfit = buy.price * 1.10;
+                        
+                        // Format P&L with proper color
+                        const pnlColor = pnl >= 0 ? 'text-green-600' : 'text-red-600';
+                        const pnlPercentColor = pnlPercent >= 0 ? 'text-green-600' : 'text-red-600';
+                        
+                        row.innerHTML = `
+                            <td class="px-4 py-2 text-center text-xs border-r whitespace-nowrap">${buy.transactionDate}</td>
+                            <td class="px-4 py-2 text-left text-xs font-medium border-r">${security}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">${formatInteger(buy.quantity)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(buy.price, 2)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(stopLoss, 2)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(takeProfit, 2)}</td>
+                            <td class="px-4 py-2 text-center text-xs border-r">BUY</td>
+                            <td class="px-4 py-2 text-center text-xs border-r">${soldDate}</td>
+                            <td class="px-4 py-2 text-center text-xs border-r">${duration}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">${soldPrice}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">${sellOrderValue}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r ${pnlColor}">${pnl >= 0 ? '+' : ''}${formatNumber(pnl, 2)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r ${pnlPercentColor}">${pnlPercent >= 0 ? '+' : ''}${pnlPercent.toFixed(2)}%</td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Process remaining SELL transactions (if any)
+                    sells.filter(sell => sell.quantity > 0).forEach(sell => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                        
+                        row.innerHTML = `
+                            <td class="px-4 py-2 text-center text-xs border-r whitespace-nowrap">${sell.transactionDate}</td>
+                            <td class="px-4 py-2 text-left text-xs font-medium border-r">${security}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">${formatInteger(sell.quantity)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(sell.price, 2)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">-</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">-</td>
+                            <td class="px-4 py-2 text-center text-xs border-r">SELL</td>
+                            <td class="px-4 py-2 text-center text-xs border-r">${sell.transactionDate}</td>
+                            <td class="px-4 py-2 text-center text-xs border-r">-</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(sell.price, 2)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r">Rs. ${formatNumber(sell.grossAmount, 2)}</td>
+                            <td class="px-4 py-2 text-right text-xs border-r text-gray-500">-</td>
+                            <td class="px-4 py-2 text-right text-xs border-r text-gray-500">-</td>
+                        `;
+                        
+                        tableBody.appendChild(row);
+                    });
+                });
+                
+            } catch (error) {
+                console.error('Error populating trading journal from executions:', error);
             }
         }
 
@@ -4991,15 +6957,24 @@
             'VLL.R0000': 'Utilities'
         };
 
-        // Diversification chart function removed - now handled in separate pages
+        // Diversification chart function
         function createDiversificationChart(portfolioData) {
-            // Function disabled - chart now handled in separate pages
-            return;
             try {
+                console.log('createDiversificationChart called with:', portfolioData?.length, 'items');
                 const chartContainer = document.getElementById('diversificationChart');
                 if (!chartContainer) {
+                    console.error('diversificationChart container not found!');
                     return;
                 }
+                
+                console.log('Diversification chart container found:', {
+                    element: chartContainer,
+                    visible: !chartContainer.classList.contains('hidden'),
+                    display: window.getComputedStyle(chartContainer).display,
+                    parentVisible: !chartContainer.parentElement.classList.contains('hidden'),
+                    parentElement: chartContainer.parentElement,
+                    parentClasses: chartContainer.parentElement.className
+                });
                 
                 // Clear existing chart
                 chartContainer.innerHTML = '';
@@ -5832,6 +7807,7 @@
         }
 
         async function compareSelectedPortfolios() {
+            console.log('compareSelectedPortfolios called');
             const selectedPortfolios = getSelectedPortfolios();
             if (selectedPortfolios.length !== 2) {
                 showNotification('Please select exactly 2 portfolios for comparison', 'warning');
@@ -5872,12 +7848,13 @@
                 document.getElementById('portfolioManagementSection').classList.add('hidden');
                 document.getElementById('uploadModal').classList.add('hidden');
                 
-                // Show comparison elements
-                document.getElementById('comparisonCards').classList.remove('hidden');
-                document.getElementById('comparisonTable').classList.remove('hidden');
+                // Show new comparison table
+                document.getElementById('newComparisonTable').classList.remove('hidden');
                 
-                // Calculate and display comparison data
-                calculateComparisonData(initialPortfolio, portfolioData);
+                console.log('New comparison table shown');
+                
+                // Populate new comparison table
+                populateNewComparisonTable(initialPortfolio, portfolioData);
                 
                 // Refresh dashboard
                 refreshDashboard();
@@ -6009,6 +7986,15 @@
         const tableViewBtn = document.getElementById('tableViewBtn');
         if (tableViewBtn) {
             tableViewBtn.addEventListener('click', showTableView);
+        }
+        
+        // Key filter dropdown
+        const keyFilter = document.getElementById('keyFilter');
+        if (keyFilter) {
+            keyFilter.addEventListener('change', function() {
+                // Reload the portfolio list to apply the filter
+                loadPortfolioList();
+            });
         }
         
         // Delete selected button
@@ -6178,7 +8164,48 @@
                 notification.classList.add('hidden');
             }
         }
-
+        
+        // Update key filter options based on available portfolios
+        function updateKeyFilterOptions(portfolios) {
+            const keyFilter = document.getElementById('keyFilter');
+            if (!keyFilter) return;
+            
+            // Preserve current selection
+            const currentSelection = keyFilter.value;
+            
+            // Get unique keys from portfolios
+            const keys = new Set();
+            portfolios.forEach(portfolio => {
+                const portfolioKey = portfolio.metadata?.key || 'DEFAULT';
+                if (portfolioKey === 'COMBINED') {
+                    keys.add('CMB');
+                } else {
+                    keys.add(portfolioKey);
+                }
+            });
+            
+            // Sort keys (CMB first, then alphabetical)
+            const sortedKeys = Array.from(keys).sort((a, b) => {
+                if (a === 'CMB') return -1;
+                if (b === 'CMB') return 1;
+                return a.localeCompare(b);
+            });
+            
+            // Update dropdown options
+            keyFilter.innerHTML = `
+                <option value="CMB">CMB (Combined)</option>
+                <option value="ALL">All Keys</option>
+                ${sortedKeys.filter(key => key !== 'CMB').map(key => `<option value="${key}">${key}</option>`).join('')}
+            `;
+            
+            // Restore selection if it still exists, otherwise default to CMB
+            if (keyFilter.querySelector(`option[value="${currentSelection}"]`)) {
+                keyFilter.value = currentSelection;
+            } else {
+                keyFilter.value = 'CMB';
+            }
+        }
+        
         // View Toggle Functions
         function showCardView() {
             const portfolioList = document.getElementById('portfolioList');
@@ -6258,7 +8285,8 @@
                 // Load portfolio data and prepare chart data
                 await prepareStockPriceData();
                 
-                // Show chart view
+                // Hide portfolio management section and show chart view
+                document.getElementById('portfolioManagementSection').classList.add('hidden');
                 document.getElementById('multiPortfolioChartView').classList.remove('hidden');
                 
                 // Populate stock list
@@ -6289,7 +8317,10 @@
             for (const portfolio of selectedPortfoliosForChart) {
                 const portfolioData = await loadPortfolioFromDB(portfolio.id);
                 if (portfolioData && portfolioData.holdings) {
-                    const portfolioDate = portfolioData.name; // YYYYMMDD format
+                    // Extract date from portfolio name (format: Portfolio_YYYY-MM-DD_KEY)
+                    const portfolioDate = extractDateFromPortfolioName(portfolioData.name);
+                    // Convert YYYY-MM-DD to YYYYMMDD format for chart
+                    const formattedDate = portfolioDate.replace(/-/g, '');
                     
                     // Calculate portfolio-level averages
                     let totalAvgPrice = 0;
@@ -6319,7 +8350,7 @@
                         }
                         
                         // Add data for this portfolio date
-                        stockPriceData[stock].dates.push(portfolioDate);
+                        stockPriceData[stock].dates.push(formattedDate);
                         stockPriceData[stock].avgPrices.push(holding.avgPrice || 0);
                         stockPriceData[stock].currentPrices.push(holding.marketValue / (holding.quantity || 1) || 0);
                         stockPriceData[stock].quantities.push(holding.quantity || 0);
@@ -6370,7 +8401,7 @@
                         const portfolioPnLValue = totalCurrentPrice - portfolioTotalCost;
                         const portfolioPnLPercentage = portfolioTotalCost > 0 ? (portfolioPnLValue / portfolioTotalCost) * 100 : 0;
                         
-                        stockPriceData['Portfolio'].dates.push(portfolioDate);
+                        stockPriceData['Portfolio'].dates.push(formattedDate);
                         stockPriceData['Portfolio'].avgPrices.push(portfolioAvgPrice);
                         stockPriceData['Portfolio'].currentPrices.push(portfolioCurrentPrice);
                         stockPriceData['Portfolio'].quantities.push(totalQuantity);
@@ -6900,6 +8931,7 @@
 
         function closeChartView() {
             document.getElementById('multiPortfolioChartView').classList.add('hidden');
+            document.getElementById('portfolioManagementSection').classList.remove('hidden');
             selectedPortfoliosForChart = [];
             selectedStocks.clear();
             if (window.stockPriceChartInstance) {
@@ -7662,12 +9694,57 @@
         let currentPortfolioForTargets = null;
         let targetPrices = {}; // Store target prices for each stock
 
+        // Normalize symbol for target price lookup (handle .N0000 suffix variations)
+        function normalizeSymbolForTargetPrice(symbol) {
+            if (!symbol) return symbol;
+            
+            const symbolUpper = symbol.toUpperCase();
+            
+            // Remove .N0000 suffix if present
+            if (symbolUpper.endsWith('0000')) {
+                return symbolUpper.slice(0, -4);
+            }
+            
+            return symbolUpper;
+        }
+
+        // Get target price data for a symbol (check both .N and .N0000 formats)
+        function getTargetPriceForSymbol(symbol) {
+            if (!symbol) return null;
+            
+            const symbolUpper = symbol.toUpperCase();
+            
+            // Try direct lookup first
+            let targetData = targetPrices[symbolUpper];
+            if (targetData) return targetData;
+            
+            // Try with .N0000 suffix
+            if (symbolUpper.match(/\.(N|X|P)$/)) {
+                const withSuffix = symbolUpper + '0000';
+                targetData = targetPrices[withSuffix];
+                if (targetData) return targetData;
+            }
+            
+            // Try without .N0000 suffix
+            if (symbolUpper.endsWith('0000')) {
+                const withoutSuffix = symbolUpper.slice(0, -4);
+                targetData = targetPrices[withoutSuffix];
+                if (targetData) return targetData;
+            }
+            
+            return null;
+        }
+
         // Wrapper function to load portfolio and show target price management
         async function showTargetPriceForPortfolio(portfolioId) {
             try {
+                console.log('Loading portfolio for target prices:', portfolioId);
                 const portfolio = await loadPortfolioFromDB(portfolioId);
+                console.log('Portfolio loaded:', portfolio);
+                console.log('Portfolio holdings:', portfolio.holdings);
                 showTargetPriceManagement(portfolio);
             } catch (error) {
+                console.error('Error loading portfolio:', error);
                 alert('Error loading portfolio: ' + error.message);
             }
         }
@@ -7694,7 +9771,9 @@
                 targetPriceSection.style.display = 'block';
                 targetPriceSection.style.visibility = 'visible';
                 targetPriceSection.style.opacity = '1';
+                console.log('Target price section made visible');
             } else {
+                console.error('Target price section not found!');
                 return;
             }
             
@@ -7710,15 +9789,18 @@
         }
 
         function loadTargetPriceData(portfolio) {
+            console.log('Loading target price data for portfolio:', portfolio);
             const tbody = document.getElementById('targetPriceTableBody');
             
             if (!tbody) {
+                console.error('Target price table body not found');
                 return;
             }
             
             tbody.innerHTML = '';
 
             if (!portfolio.holdings || portfolio.holdings.length === 0) {
+                console.log('No holdings found in portfolio');
                 tbody.innerHTML = '<tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">No holdings found</td></tr>';
                 return;
             }
@@ -7729,11 +9811,15 @@
                 return quantity > 0;
             });
 
+            console.log('Valid holdings:', validHoldings);
 
             if (validHoldings.length === 0) {
+                console.log('No holdings with quantity > 0 found');
                 tbody.innerHTML = '<tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">No holdings with quantity > 0 found</td></tr>';
                 return;
             }
+
+            console.log('Starting to populate table with', validHoldings.length, 'holdings');
 
             validHoldings.forEach((holding, index) => {
                 const symbol = holding.symbol || holding.security;
@@ -7758,8 +9844,10 @@
                 const currentPnL = netProceeds - currentTotalCost;
                 const currentPnLPercent = avgCost > 0 ? (currentPnL / currentTotalCost) * 100 : 0;
                 
-                // Get saved target price data
-                const targetData = targetPrices[symbol] || { targetPrice: 0, tpSetDate: '' };
+                // Get saved target price data (check both .N and .N0000 formats)
+                console.log(`Looking up target data for symbol: ${symbol}`);
+                const targetData = getTargetPriceForSymbol(symbol) || { targetPrice: 0, tpSetDate: '' };
+                console.log(`Target data found:`, targetData);
                 
                 const row = document.createElement('tr');
                 row.className = 'border-b hover:bg-gray-50';
@@ -7798,13 +9886,15 @@
                 tbody.appendChild(row);
             });
 
+            console.log('Finished adding rows. Total rows in tbody:', tbody.children.length);
+
             // Add event listeners for input changes
             addTargetPriceEventListeners();
             
             // Calculate target P&L for all stocks with target prices
             portfolio.holdings.forEach((holding, index) => {
                 const symbol = holding.symbol || holding.security;
-                const targetData = targetPrices[symbol];
+                const targetData = getTargetPriceForSymbol(symbol);
                 if (targetData && targetData.targetPrice > 0) {
                     calculateTargetPnL(symbol);
                 }
@@ -7868,10 +9958,16 @@
         }
 
         function updateTargetPriceData(symbol, field, value) {
-            if (!targetPrices[symbol]) {
-                targetPrices[symbol] = {};
+            // Store in .N0000 format to be compatible with targets.html
+            let storageSymbol = symbol.toUpperCase();
+            if (storageSymbol.match(/\.(N|X|P)$/)) {
+                storageSymbol = storageSymbol + '0000';
             }
-            targetPrices[symbol][field] = value;
+            
+            if (!targetPrices[storageSymbol]) {
+                targetPrices[storageSymbol] = {};
+            }
+            targetPrices[storageSymbol][field] = value;
             
             // Save to localStorage
             localStorage.setItem('targetPrices', JSON.stringify(targetPrices));
@@ -7885,7 +9981,8 @@
 
             const quantity = parseFloat(holding.quantity) || 0;
             const avgCost = parseFloat(holding.avgPrice || holding.avgCost) || 0;
-            const targetPrice = parseFloat(targetPrices[symbol]?.targetPrice) || 0;
+            const targetData = getTargetPriceForSymbol(symbol);
+            const targetPrice = parseFloat(targetData?.targetPrice) || 0;
 
             if (targetPrice > 0 && quantity > 0 && avgCost > 0) {
                 // Calculate target P&L with 1.12% broker fees
@@ -8012,7 +10109,7 @@
 
     <!-- Professional Footer -->
     <footer class="bg-white border-t mt-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Brand Section -->
                 <div class="col-span-1 md:col-span-2">
